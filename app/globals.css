@@ -84,7 +84,6 @@ html {
 
 .animate-in {
   animation: fade-in 0.35s ease-out forwards;
-  opacity: 0;
 }
 
 .animate-in-done {

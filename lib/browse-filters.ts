@@ -44,9 +44,11 @@ export function countActiveFilters(filters: JobFilters): number {
   return count;
 }
 
-function matchesDatePosted(datePosted: string, filter: JobFilters["datePosted"]): boolean {
+function matchesDatePosted(datePosted: string | undefined, filter: JobFilters["datePosted"]): boolean {
   if (!filter || filter === "any") return true;
+  if (!datePosted) return true;
   const posted = new Date(datePosted);
+  if (Number.isNaN(posted.getTime())) return true;
   const now = new Date();
   const ms = now.getTime() - posted.getTime();
   const days = ms / (1000 * 60 * 60 * 24);
@@ -135,7 +137,7 @@ export function filterJobsAdvanced(jobs: Job[], filters: JobFilters): Job[] {
 
     if (
       filters.minRating != null &&
-      job.companyRating < filters.minRating
+      (job.companyRating ?? 0) < filters.minRating
     ) {
       return false;
     }
@@ -146,7 +148,9 @@ export function filterJobsAdvanced(jobs: Job[], filters: JobFilters): Job[] {
 
     const salMin = filters.salaryMin ?? SALARY_LPA_RANGE.min;
     const salMax = filters.salaryMax ?? SALARY_LPA_RANGE.max;
-    if (job.salaryMax < salMin || job.salaryMin > salMax) {
+    const jobSalMin = job.salaryMin ?? 0;
+    const jobSalMax = job.salaryMax ?? 0;
+    if (jobSalMax < salMin || jobSalMin > salMax) {
       return false;
     }
 
@@ -160,17 +164,20 @@ export function sortJobs(jobs: Job[], sort: SortOption): Job[] {
     case "newest":
       return copy.sort(
         (a, b) =>
-          new Date(b.datePosted).getTime() - new Date(a.datePosted).getTime()
+          new Date(b.datePosted ?? 0).getTime() -
+          new Date(a.datePosted ?? 0).getTime()
       );
     case "salary":
-      return copy.sort((a, b) => b.salaryMax - a.salaryMax);
+      return copy.sort((a, b) => (b.salaryMax ?? 0) - (a.salaryMax ?? 0));
     case "applied":
-      return copy.sort((a, b) => b.applicantCount - a.applicantCount);
+      return copy.sort(
+        (a, b) => (b.applicantCount ?? 0) - (a.applicantCount ?? 0)
+      );
     case "relevant":
     default:
       return copy.sort((a, b) => {
         if (a.featured !== b.featured) return a.featured ? -1 : 1;
-        return b.applicantCount - a.applicantCount;
+        return (b.applicantCount ?? 0) - (a.applicantCount ?? 0);
       });
   }
 }

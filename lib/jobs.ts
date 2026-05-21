@@ -48,12 +48,38 @@ export function normalizeJob(raw: Partial<Job> & Pick<Job, "id" | "title" | "com
   };
 }
 
+let clientJobsSnapshot: Job[] | null = null;
+let clientJobsSnapshotKey = "";
+
+/** Invalidate after mutating posted/saved/recent jobs in localStorage. */
+export function invalidateJobsCache(): void {
+  clientJobsSnapshotKey = "";
+}
+
+function getClientJobsSnapshot(): Job[] {
+  const key =
+    typeof window !== "undefined"
+      ? (localStorage.getItem(POSTED_JOBS_KEY) ?? "")
+      : "server";
+  if (clientJobsSnapshot && clientJobsSnapshotKey === key) {
+    return clientJobsSnapshot;
+  }
+  clientJobsSnapshotKey = key;
+  clientJobsSnapshot = [...getPostedJobs(), ...mockJobs];
+  return clientJobsSnapshot;
+}
+
+/** Stable snapshot for client stores; same array reference until localStorage changes. */
+export function getJobsStoreSnapshot(): Job[] {
+  if (typeof window === "undefined") return mockJobs;
+  return getClientJobsSnapshot();
+}
+
 export function getAllJobs(): Job[] {
   if (typeof window === "undefined") {
     return mockJobs;
   }
-  const posted = getPostedJobs();
-  return [...posted, ...mockJobs];
+  return getClientJobsSnapshot();
 }
 
 export function getMockJobs(): Job[] {
@@ -107,6 +133,7 @@ export function addRecentlyViewed(jobId: string): void {
       RECENTLY_VIEWED_KEY,
       JSON.stringify(filtered.slice(0, MAX_RECENTLY_VIEWED))
     );
+    invalidateJobsCache();
     window.dispatchEvent(new Event("recently-viewed-changed"));
   } catch {
     /* ignore */
@@ -147,6 +174,7 @@ export function savePostedJob(job: Job): void {
   posted.unshift(job);
   localStorage.setItem(POSTED_JOBS_KEY, JSON.stringify(posted));
   if (typeof window !== "undefined") {
+    invalidateJobsCache();
     window.dispatchEvent(new Event("posted-jobs-changed"));
   }
 }
@@ -175,6 +203,7 @@ export function toggleSavedJob(id: string): boolean {
     isSaved = true;
   }
   if (typeof window !== "undefined") {
+    invalidateJobsCache();
     window.dispatchEvent(new Event("saved-jobs-changed"));
   }
   return isSaved;

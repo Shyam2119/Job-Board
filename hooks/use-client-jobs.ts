@@ -1,69 +1,99 @@
 "use client";
 
-import { useCallback, useSyncExternalStore } from "react";
+import { useMemo, useSyncExternalStore } from "react";
+import { getJobsStoreSnapshot, invalidateJobsCache } from "@/lib/jobs";
 import { jobs as mockJobs } from "@/data/jobs";
-import {
-  getAllJobs,
-  getJobsByCompany,
-  getRecentlyViewedJobs,
-  getSavedJobs,
-  isJobSaved,
-} from "@/lib/jobs";
 import type { Job } from "@/types/job";
 
-function subscribeStorage(onStoreChange: () => void) {
-  const handler = () => onStoreChange();
+function subscribeJobs(onStoreChange: () => void) {
+  const handler = () => {
+    invalidateJobsCache();
+    onStoreChange();
+  };
   window.addEventListener("storage", handler);
   window.addEventListener("posted-jobs-changed", handler);
   window.addEventListener("saved-jobs-changed", handler);
   window.addEventListener("recently-viewed-changed", handler);
-  window.addEventListener("profile-updated", handler);
   return () => {
     window.removeEventListener("storage", handler);
     window.removeEventListener("posted-jobs-changed", handler);
     window.removeEventListener("saved-jobs-changed", handler);
     window.removeEventListener("recently-viewed-changed", handler);
-    window.removeEventListener("profile-updated", handler);
   };
+}
+
+function subscribeSaved(onStoreChange: () => void) {
+  const handler = () => onStoreChange();
+  window.addEventListener("saved-jobs-changed", handler);
+  window.addEventListener("storage", handler);
+  return () => {
+    window.removeEventListener("saved-jobs-changed", handler);
+    window.removeEventListener("storage", handler);
+  };
+}
+
+function getSavedIdsKey(): string {
+  if (typeof window === "undefined") return "";
+  try {
+    return localStorage.getItem("job-board-saved-jobs") ?? "";
+  } catch {
+    return "";
+  }
+}
+
+function getRecentIdsKey(): string {
+  if (typeof window === "undefined") return "";
+  try {
+    return localStorage.getItem("job-board-recently-viewed") ?? "";
+  } catch {
+    return "";
+  }
 }
 
 export function useClientJobs(): Job[] {
   return useSyncExternalStore(
-    subscribeStorage,
-    getAllJobs,
+    subscribeJobs,
+    getJobsStoreSnapshot,
     () => mockJobs
   );
 }
 
 export function useCompanyJobs(companySlug: string): Job[] {
-  const getSnapshot = useCallback(
-    () => getJobsByCompany(companySlug),
-    [companySlug]
-  );
-
-  return useSyncExternalStore(subscribeStorage, getSnapshot, () =>
-    mockJobs.filter((j) => j.companySlug === companySlug)
+  const jobs = useClientJobs();
+  return useMemo(
+    () => jobs.filter((j) => j.companySlug === companySlug),
+    [jobs, companySlug]
   );
 }
 
 export function useSavedJobsList(): Job[] {
-  const getSnapshot = useCallback(() => {
-    return getSavedJobs(getAllJobs());
-  }, []);
-
-  return useSyncExternalStore(subscribeStorage, getSnapshot, () => []);
+  const savedKey = useSyncExternalStore(subscribeSaved, getSavedIdsKey, () => "");
+  const jobs = useClientJobs();
+  return useMemo(() => {
+    const ids: string[] = savedKey ? (JSON.parse(savedKey) as string[]) : [];
+    return jobs.filter((job) => ids.includes(job.id));
+  }, [jobs, savedKey]);
 }
 
 export function useRecentlyViewedList(): Job[] {
-  const getSnapshot = useCallback(() => {
-    return getRecentlyViewedJobs(getAllJobs());
-  }, []);
-
-  return useSyncExternalStore(subscribeStorage, getSnapshot, () => []);
+  const recentKey = useSyncExternalStore(
+    subscribeJobs,
+    getRecentIdsKey,
+    () => ""
+  );
+  const jobs = useClientJobs();
+  return useMemo(() => {
+    const ids: string[] = recentKey ? (JSON.parse(recentKey) as string[]) : [];
+    return ids
+      .map((id) => jobs.find((j) => j.id === id))
+      .filter((j): j is Job => j != null);
+  }, [jobs, recentKey]);
 }
 
 export function useBookmarkStatus(jobId: string): boolean {
-  const getSnapshot = useCallback(() => isJobSaved(jobId), [jobId]);
-
-  return useSyncExternalStore(subscribeStorage, getSnapshot, () => false);
+  const savedKey = useSyncExternalStore(subscribeSaved, getSavedIdsKey, () => "");
+  return useMemo(() => {
+    const ids: string[] = savedKey ? (JSON.parse(savedKey) as string[]) : [];
+    return ids.includes(jobId);
+  }, [savedKey, jobId]);
 }
