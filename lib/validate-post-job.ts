@@ -15,33 +15,50 @@ export interface PostJobFormValues {
 
 export type PostJobFormErrors = Partial<Record<keyof PostJobFormValues, string>>;
 
+const LPA_MIN = 2;
+const LPA_MAX = 50;
+
+function parseLpa(value: string): number | null {
+  const n = Number(value);
+  if (Number.isNaN(n) || n < 0) return null;
+  return n > 100 ? n / 100000 : n;
+}
+
 export function validatePostJobForm(
   values: PostJobFormValues
 ): PostJobFormErrors {
   const errors: PostJobFormErrors = {};
 
-  if (!values.title.trim()) {
+  const title = values.title.trim();
+  if (!title) {
     errors.title = "Job title is required";
-  } else if (values.title.trim().length < 3) {
+  } else if (title.length < 3) {
     errors.title = "Title must be at least 3 characters";
+  } else if (title.length > 120) {
+    errors.title = "Title must be under 120 characters";
   }
 
-  if (!values.company.trim()) {
+  const company = values.company.trim();
+  if (!company) {
     errors.company = "Company name is required";
-  } else if (values.company.trim().length < 2) {
+  } else if (company.length < 2) {
     errors.company = "Company name must be at least 2 characters";
   }
 
-  if (!values.location.trim()) {
+  const location = values.location.trim();
+  if (!location) {
     errors.location = "Location is required";
-  } else if (values.location.trim().length < 2) {
-    errors.location = "Enter a valid location";
+  } else if (location.length < 2) {
+    errors.location = "Enter a valid location (e.g. Bengaluru or Remote)";
   }
 
-  if (!values.description.trim()) {
+  const description = values.description.trim();
+  if (!description) {
     errors.description = "Description is required";
-  } else if (values.description.trim().length < 50) {
+  } else if (description.length < 50) {
     errors.description = "Description must be at least 50 characters";
+  } else if (description.length > 5000) {
+    errors.description = "Description must be under 5000 characters";
   }
 
   const reqs = values.requirements
@@ -51,26 +68,47 @@ export function validatePostJobForm(
 
   if (reqs.length === 0) {
     errors.requirements = "Add at least one requirement (one per line)";
+  } else if (reqs.some((r) => r.length < 3)) {
+    errors.requirements = "Each requirement should be at least 3 characters";
   }
 
-  const min = values.salaryMin ? Number(values.salaryMin) : null;
-  const max = values.salaryMax ? Number(values.salaryMax) : null;
+  const min = values.salaryMin ? parseLpa(values.salaryMin) : null;
+  const max = values.salaryMax ? parseLpa(values.salaryMax) : null;
 
-  if (values.salaryMin && (Number.isNaN(min) || min! < 0)) {
-    errors.salaryMin = "Enter a valid minimum salary";
+  if (values.salaryMin && min == null) {
+    errors.salaryMin = "Enter a valid minimum salary (LPA)";
   }
-  if (values.salaryMax && (Number.isNaN(max) || max! < 0)) {
-    errors.salaryMax = "Enter a valid maximum salary";
+  if (values.salaryMax && max == null) {
+    errors.salaryMax = "Enter a valid maximum salary (LPA)";
   }
-  if (min != null && max != null && !Number.isNaN(min) && !Number.isNaN(max)) {
+  if (min != null && max != null) {
     if (min > max) {
-      errors.salaryMax = "Maximum must be greater than minimum";
+      errors.salaryMax = "Maximum must be greater than or equal to minimum";
     }
-    if (min < 2 || max > 50) {
-      if (min < 2) errors.salaryMin = "Minimum salary seems too low (LPA)";
-      if (max > 50) errors.salaryMax = "Maximum salary seems too high (LPA)";
+    if (min < LPA_MIN) {
+      errors.salaryMin = `Minimum should be at least ${LPA_MIN} LPA`;
     }
+    if (max > LPA_MAX) {
+      errors.salaryMax = `Maximum should be at most ${LPA_MAX} LPA`;
+    }
+  } else if (min != null && (min < LPA_MIN || min > LPA_MAX)) {
+    errors.salaryMin = `Enter a value between ${LPA_MIN} and ${LPA_MAX} LPA`;
+  } else if (max != null && (max < LPA_MIN || max > LPA_MAX)) {
+    errors.salaryMax = `Enter a value between ${LPA_MIN} and ${LPA_MAX} LPA`;
   }
 
   return errors;
 }
+
+export const POST_JOB_FIELD_ORDER: (keyof PostJobFormValues)[] = [
+  "title",
+  "company",
+  "location",
+  "salary",
+  "salaryMin",
+  "salaryMax",
+  "type",
+  "category",
+  "description",
+  "requirements",
+];

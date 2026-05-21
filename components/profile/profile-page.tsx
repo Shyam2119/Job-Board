@@ -187,7 +187,10 @@ export function ProfilePage() {
                 )}
               >
                 <t.icon className="h-4 w-4" />
-                <span className="hidden sm:inline">{t.label}</span>
+                <span className="max-w-[4.5rem] truncate sm:max-w-none sm:overflow-visible">
+                  <span className="sm:hidden">{t.label.split(" ")[0]}</span>
+                  <span className="hidden sm:inline">{t.label}</span>
+                </span>
               </button>
             ))}
           </div>

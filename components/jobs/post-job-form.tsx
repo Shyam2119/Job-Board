@@ -20,6 +20,7 @@ import { categories, jobTypes } from "@/data/jobs";
 import { savePostedJob } from "@/lib/jobs";
 import { slugify, cn } from "@/lib/utils";
 import {
+  POST_JOB_FIELD_ORDER,
   validatePostJobForm,
   type PostJobFormErrors,
   type PostJobFormValues,
@@ -78,8 +79,16 @@ export function PostJobForm() {
     setErrors(validationErrors);
 
     if (Object.keys(validationErrors).length > 0) {
+      const firstKey = POST_JOB_FIELD_ORDER.find((k) => validationErrors[k]);
+      if (firstKey) {
+        const el = document.getElementById(firstKey);
+        el?.scrollIntoView({ behavior: "smooth", block: "center" });
+        if (el && "focus" in el) {
+          (el as HTMLElement).focus();
+        }
+      }
       toast.error("Please fix the errors below", {
-        description: "Some required fields are missing or invalid.",
+        description: `${Object.keys(validationErrors).length} field(s) need attention.`,
       });
       return;
     }
@@ -87,12 +96,15 @@ export function PostJobForm() {
     setLoading(true);
 
     const companySlug = slugify(form.company);
-    const salaryMin = Number(form.salaryMin) || 50000;
-    const salaryMax = Number(form.salaryMax) || 80000;
+    const parseLpa = (v: string, fallback: number) => {
+      const n = Number(v);
+      if (Number.isNaN(n) || n <= 0) return fallback;
+      return n > 100 ? n / 100000 : n;
+    };
+    const lpaMin = parseLpa(form.salaryMin, 8);
+    const lpaMax = parseLpa(form.salaryMax, 12);
 
     const today = new Date().toISOString().split("T")[0];
-    const lpaMin = salaryMin > 50 ? salaryMin / 100000 : salaryMin;
-    const lpaMax = salaryMax > 50 ? salaryMax / 100000 : salaryMax;
 
     const job: Job = {
       id: `posted-${Date.now()}`,
@@ -192,32 +204,38 @@ export function PostJobForm() {
                 id="salary"
                 value={form.salary}
                 onChange={(e) => updateField("salary", e.target.value)}
-                placeholder="$80,000 - $100,000"
+                placeholder="₹8L – ₹15L per annum"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="salaryMin">Salary Min (USD)</Label>
+              <Label htmlFor="salaryMin">Salary Min (LPA)</Label>
               <Input
                 id="salaryMin"
                 type="number"
-                min={0}
+                min={2}
+                max={50}
+                step={0.5}
                 value={form.salaryMin}
                 onChange={(e) => updateField("salaryMin", e.target.value)}
                 onBlur={() => handleBlur("salaryMin")}
+                placeholder="e.g. 8"
                 aria-invalid={!!errors.salaryMin && !!touched.salaryMin}
                 className={fieldClass("salaryMin")}
               />
               <FieldError message={touched.salaryMin ? errors.salaryMin : undefined} />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="salaryMax">Salary Max (USD)</Label>
+              <Label htmlFor="salaryMax">Salary Max (LPA)</Label>
               <Input
                 id="salaryMax"
                 type="number"
-                min={0}
+                min={2}
+                max={50}
+                step={0.5}
                 value={form.salaryMax}
                 onChange={(e) => updateField("salaryMax", e.target.value)}
                 onBlur={() => handleBlur("salaryMax")}
+                placeholder="e.g. 15"
                 aria-invalid={!!errors.salaryMax && !!touched.salaryMax}
                 className={fieldClass("salaryMax")}
               />

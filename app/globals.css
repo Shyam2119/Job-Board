@@ -83,7 +83,12 @@ html {
 }
 
 .animate-in {
-  animation: fade-in 0.3s ease-out forwards;
+  animation: fade-in 0.35s ease-out forwards;
+  opacity: 0;
+}
+
+.animate-in-done {
+  opacity: 1;
 }
 
 .fade-in {

@@ -38,7 +38,7 @@ export function JobCard({ job }: JobCardProps) {
   const isNew = isJobNew(job.datePosted);
 
   return (
-    <Card className="group overflow-hidden transition-all duration-300 hover:-translate-y-0.5 hover:border-accent/30 hover:shadow-lg">
+    <Card className="group animate-in overflow-hidden transition-all duration-300 hover:-translate-y-0.5 hover:border-accent/30 hover:shadow-lg">
       <CardContent className="p-5">
         <div className="flex items-start justify-between gap-3">
           <Link href={`/jobs/${job.id}`} className="flex min-w-0 flex-1 gap-4">

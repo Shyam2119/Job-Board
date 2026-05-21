@@ -14,11 +14,13 @@ import type { Job } from "@/types/job";
 function subscribeStorage(onStoreChange: () => void) {
   const handler = () => onStoreChange();
   window.addEventListener("storage", handler);
+  window.addEventListener("posted-jobs-changed", handler);
   window.addEventListener("saved-jobs-changed", handler);
   window.addEventListener("recently-viewed-changed", handler);
   window.addEventListener("profile-updated", handler);
   return () => {
     window.removeEventListener("storage", handler);
+    window.removeEventListener("posted-jobs-changed", handler);
     window.removeEventListener("saved-jobs-changed", handler);
     window.removeEventListener("recently-viewed-changed", handler);
     window.removeEventListener("profile-updated", handler);

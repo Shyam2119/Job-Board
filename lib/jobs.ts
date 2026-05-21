@@ -105,6 +105,9 @@ export function savePostedJob(job: Job): void {
   const posted = getPostedJobs();
   posted.unshift(job);
   localStorage.setItem(POSTED_JOBS_KEY, JSON.stringify(posted));
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event("posted-jobs-changed"));
+  }
 }
 
 export function getSavedJobIds(): string[] {

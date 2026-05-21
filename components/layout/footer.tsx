@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 const exploreLinks = [
   { href: "/jobs", label: "All Jobs" },
   { href: "/jobs?category=Tech", label: "Tech Jobs" },
-  { href: "/jobs?location=Remote", label: "Remote Jobs" },
+  { href: "/jobs?workMode=remote", label: "Remote Jobs" },
   { href: "/saved", label: "Saved Jobs" },
 ];
 
@@ -38,7 +38,7 @@ const socialLinks = [
     icon: TwitterIcon,
   },
   {
-    href: "https://github.com",
+    href: "https://github.com/Shyam2119",
     label: "GitHub",
     icon: GitHubIcon,
   },
@@ -46,7 +46,7 @@ const socialLinks = [
 
 export function Footer() {
   return (
-    <footer className="mt-auto border-t border-border bg-navy text-slate-300">
+    <footer className="mt-auto border-t border-border bg-navy text-slate-300 dark:border-navy-light">
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-5">
           <div className="sm:col-span-2 lg:col-span-2">
@@ -59,7 +59,7 @@ export function Footer() {
               </span>
               TalentFlow
             </Link>
-            <p className="mt-3 max-w-sm text-sm leading-relaxed text-slate-400">
+            <p className="mt-3 max-w-sm text-sm leading-relaxed text-slate-400 dark:text-slate-400">
               Find your next career move. Browse thousands of jobs from top
               companies across every industry.
             </p>
@@ -73,7 +73,7 @@ export function Footer() {
                   aria-label={label}
                   className={cn(
                     "flex h-9 w-9 items-center justify-center rounded-lg border border-navy-light bg-navy-light/50 text-slate-400 transition-all",
-                    "hover:border-accent/50 hover:bg-accent/10 hover:text-accent"
+                    "hover:border-accent/50 hover:bg-accent/10 hover:text-accent dark:border-slate-600 dark:bg-slate-800/50"
                   )}
                 >
                   <Icon className="h-4 w-4" />
@@ -137,19 +137,25 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="mt-10 flex flex-col items-center justify-between gap-4 border-t border-navy-light pt-8 text-center text-sm text-slate-500 sm:flex-row sm:text-left">
+        <div className="mt-10 flex flex-col items-center justify-between gap-4 border-t border-navy-light pt-8 text-center text-sm text-slate-500 dark:border-slate-700 sm:flex-row sm:text-left">
           <p>© {new Date().getFullYear()} TalentFlow. All rights reserved.</p>
-          <div className="flex flex-wrap justify-center gap-4 sm:justify-end">
-            <Link href="/privacy" className="hover:text-accent transition-colors">
-              Privacy
+          <nav
+            className="flex flex-wrap justify-center gap-4 sm:justify-end"
+            aria-label="Legal and contact"
+          >
+            <Link href="/about" className="transition-colors hover:text-accent">
+              About
             </Link>
-            <Link href="/terms" className="hover:text-accent transition-colors">
-              Terms
-            </Link>
-            <Link href="/contact" className="hover:text-accent transition-colors">
+            <Link href="/contact" className="transition-colors hover:text-accent">
               Contact
             </Link>
-          </div>
+            <Link href="/privacy" className="transition-colors hover:text-accent">
+              Privacy
+            </Link>
+            <Link href="/terms" className="transition-colors hover:text-accent">
+              Terms
+            </Link>
+          </nav>
         </div>
       </div>
     </footer>

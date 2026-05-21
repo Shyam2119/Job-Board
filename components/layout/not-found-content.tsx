@@ -14,7 +14,7 @@ export function NotFoundContent({
   showHome = true,
 }: NotFoundContentProps) {
   return (
-    <div className="mx-auto flex min-h-[50vh] max-w-lg flex-col items-center justify-center px-4 py-24 text-center animate-in sm:px-6">
+    <div className="mx-auto flex min-h-[50vh] max-w-lg flex-col items-center justify-center px-4 py-16 text-center animate-in sm:px-6 sm:py-24">
       <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-muted text-accent">
         <FileQuestion className="h-8 w-8" />
       </div>
