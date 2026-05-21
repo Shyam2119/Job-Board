@@ -43,9 +43,11 @@ Runs on every pull request and push to `main`.
 
 If any step fails, downstream deploy jobs are skipped (`needs: ci`).
 
+Deploy jobs run **only when** `VERCEL_TOKEN`, `VERCEL_ORG_ID`, and `VERCEL_PROJECT_ID` are configured. If they are missing, CI still passes (deploy is skipped). Your site can still deploy via [Vercel Git integration](https://vercel.com/docs/deployments/git).
+
 ## Job: `deploy-production`
 
-Runs only on **push to `main`**, after `ci` succeeds.
+Runs only on **push to `main`**, after `ci` succeeds, and when all Vercel secrets are set.
 
 1. Re-runs install + Vercel CLI setup
 2. `vercel pull` (production env)
@@ -97,7 +99,8 @@ Workflow runs are grouped by ref/PR number. New pushes cancel in-progress runs f
 | Issue | Fix |
 | --- | --- |
 | `VERCEL_TOKEN` invalid | Regenerate token; ensure token has project access |
-| Build fails in CI but works locally | Run `npm ci && npm run build` locally; check Node 20 |
+| Build fails in CI but works locally | Run `npm ci && npm run build` locally; check Node 22 |
+| Workflow red but app deploys on Vercel | Add GitHub secrets or rely on Vercel Git deploy; CI passes without secrets |
 | No commit comment | Ensure workflow has `contents: write` permission |
 | Preview comment missing | Check PR targets `main`; verify secrets on fork PRs (use `pull_request` from same repo) |
 
