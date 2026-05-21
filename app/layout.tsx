@@ -31,7 +31,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
 };
 
-// Root layout: theme, header, footer, and global providers
+// Root layout — theme, header, footer, and global providers
 export default function RootLayout({
   children,
 }: Readonly<{
