@@ -35,10 +35,10 @@ PR to main                    Push to main
 Runs on every pull request and push to `main`.
 
 1. Checkout code
-2. Node.js **20** with **npm cache**
+2. Node.js **22** with **npm cache**
 3. `npm ci`
 4. `npm run lint` (ESLint)
-5. `npx tsc --noEmit` (TypeScript)
+5. `npm run typecheck` (TypeScript)
 6. `npm run build` (Next.js production build)
 
 If any step fails, downstream deploy jobs are skipped (`needs: ci`).

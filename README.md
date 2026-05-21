@@ -121,6 +121,16 @@ GitHub Actions runs on every PR and push to `main`:
 
 Configure secrets: `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`. See [.github/workflows/README.md](.github/workflows/README.md).
 
+## 📚 Documentation
+
+| Doc | Description |
+| --- | --- |
+| [docs/README.md](docs/README.md) | Documentation index |
+| [DOCUMENTATION.md](DOCUMENTATION.md) | Complete feature & technical reference |
+| [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | CI/CD and Vercel deployment |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Project structure and data flow |
+| [docs/API.md](docs/API.md) | Types and `localStorage` keys |
+
 ---
 
 ## 📄 License
