@@ -43,7 +43,7 @@ Runs on every pull request and push to `main`.
 
 If any step fails, downstream deploy jobs are skipped (`needs: ci`).
 
-Deploy jobs run **only when** `VERCEL_TOKEN`, `VERCEL_ORG_ID`, and `VERCEL_PROJECT_ID` are configured. If they are missing, CI still passes (deploy is skipped). Your site can still deploy via [Vercel Git integration](https://vercel.com/docs/deployments/git).
+Deploy jobs use the Vercel CLI with a generated `.vercel/project.json` from your secrets. Deploy steps use `continue-on-error: true` so **CI stays green** if deploy fails; the `pipeline-status` job only requires CI success. Production can still update via [Vercel Git integration](https://vercel.com/docs/deployments/git).
 
 ## Job: `deploy-production`
 
