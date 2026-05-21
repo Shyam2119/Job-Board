@@ -9,6 +9,45 @@ const MAX_RECENTLY_VIEWED = 5;
 export { SALARY_RANGE } from "@/lib/browse-filters";
 export const JOBS_PER_PAGE = 10;
 
+/** Ensures jobs from localStorage have all fields required by filters and UI. */
+export function normalizeJob(raw: Partial<Job> & Pick<Job, "id" | "title" | "company">): Job {
+  const city =
+    raw.city ??
+    raw.location?.split(",")[0]?.trim() ??
+    raw.location ??
+    "Unknown";
+  const posted = raw.postedDate ?? raw.datePosted ?? new Date().toISOString().split("T")[0];
+
+  return {
+    id: raw.id,
+    title: raw.title,
+    company: raw.company,
+    companySlug: raw.companySlug ?? raw.company.toLowerCase().replace(/\s+/g, "-"),
+    logo:
+      raw.logo ??
+      `https://ui-avatars.com/api/?name=${encodeURIComponent(raw.company)}&background=1e3a5f&color=38bdf8&bold=true`,
+    location: raw.location ?? city,
+    city,
+    salary: raw.salary ?? "Competitive",
+    salaryMin: raw.salaryMin ?? 8,
+    salaryMax: raw.salaryMax ?? 12,
+    type: raw.type ?? "full-time",
+    description: raw.description ?? "",
+    requirements: Array.isArray(raw.requirements) ? raw.requirements : [],
+    postedDate: posted,
+    datePosted: raw.datePosted ?? posted,
+    category: raw.category ?? "Tech",
+    featured: raw.featured ?? false,
+    experience: raw.experience ?? "mid",
+    workMode: raw.workMode ?? "hybrid",
+    industry: raw.industry ?? "IT",
+    skills: Array.isArray(raw.skills) ? raw.skills : ["Communication"],
+    noticePeriod: raw.noticePeriod ?? "1-month",
+    companyRating: raw.companyRating ?? 4,
+    applicantCount: raw.applicantCount ?? 0,
+  };
+}
+
 export function getAllJobs(): Job[] {
   if (typeof window === "undefined") {
     return mockJobs;
@@ -95,7 +134,9 @@ export function getPostedJobs(): Job[] {
   if (typeof window === "undefined") return [];
   try {
     const raw = localStorage.getItem(POSTED_JOBS_KEY);
-    return raw ? (JSON.parse(raw) as Job[]) : [];
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as Array<Partial<Job> & Pick<Job, "id" | "title" | "company">>;
+    return parsed.map(normalizeJob);
   } catch {
     return [];
   }

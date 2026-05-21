@@ -75,7 +75,7 @@ export function JobCard({ job }: JobCardProps) {
                 </span>
                 <span className="flex items-center gap-1">
                   <Users className="h-3.5 w-3.5 shrink-0" />
-                  {job.applicantCount.toLocaleString()} applicants
+                  {(job.applicantCount ?? 0).toLocaleString()} applicants
                 </span>
               </div>
             </div>

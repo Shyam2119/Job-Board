@@ -79,7 +79,7 @@ export function filterJobsAdvanced(jobs: Job[], filters: JobFilters): Job[] {
         job.title,
         job.company,
         job.description,
-        ...job.skills,
+        ...(job.skills ?? []),
       ]
         .join(" ")
         .toLowerCase();
@@ -88,10 +88,9 @@ export function filterJobsAdvanced(jobs: Job[], filters: JobFilters): Job[] {
 
     if (filters.location && filters.location !== "all") {
       const loc = filters.location.toLowerCase();
-      if (
-        job.city.toLowerCase() !== loc &&
-        !job.location.toLowerCase().includes(loc)
-      ) {
+      const city = (job.city ?? job.location ?? "").toLowerCase();
+      const location = (job.location ?? "").toLowerCase();
+      if (city !== loc && !location.includes(loc)) {
         return false;
       }
     }
@@ -125,7 +124,7 @@ export function filterJobsAdvanced(jobs: Job[], filters: JobFilters): Job[] {
 
     if (filters.skills?.length) {
       const hasSkill = filters.skills.some((s) =>
-        job.skills.some((js) => js.toLowerCase() === s.toLowerCase())
+        (job.skills ?? []).some((js) => js.toLowerCase() === s.toLowerCase())
       );
       if (!hasSkill) return false;
     }
