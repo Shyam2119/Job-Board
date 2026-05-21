@@ -1,6 +1,6 @@
 # 💼 TalentFlow — Premium Modern Job Board
 
-[![Live Demo](https://img.shields.io/badge/Demo-Vercel-blueviolet?style=for-the-badge&logo=vercel)](https://job-board-demo.vercel.app)
+[![Live Demo](https://img.shields.io/badge/Demo-Vercel-blueviolet?style=for-the-badge&logo=vercel)](https://job-board-jet-delta.vercel.app)
 [![CI/CD](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-2088FF?style=for-the-badge&logo=githubactions&logoColor=white)](https://github.com/Shyam2119/Job-Board/actions)
 [![Tech Stack](https://img.shields.io/badge/Stack-Next.js%20%7C%20TS%20%7C%20Tailwind-blue?style=for-the-badge&logo=nextdotjs)](https://nextjs.org/)
 [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](https://opensource.org/licenses/MIT)
@@ -9,7 +9,7 @@
 
 TalentFlow is a sleek, premium, production-ready job board platform built with **Next.js (App Router)**, **TypeScript**, and **Tailwind CSS**. It is designed with visual excellence, fluid responsiveness, and premium UX at its core to connect developers, designers, and creatives with industry-leading companies.
 
-🚀 **Live Demo:** [https://job-board-demo.vercel.app](https://job-board-demo.vercel.app)
+🚀 **Live Demo:** [https://job-board-jet-delta.vercel.app](https://job-board-jet-delta.vercel.app)
 
 ---
 
