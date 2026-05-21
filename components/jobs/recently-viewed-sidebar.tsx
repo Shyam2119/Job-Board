@@ -1,24 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { History } from "lucide-react";
-import { getAllJobs, getRecentlyViewedJobs } from "@/lib/jobs";
-import type { Job } from "@/types/job";
+import { useRecentlyViewedList } from "@/hooks/use-client-jobs";
 
 export function RecentlyViewedSidebar() {
-  const [recent, setRecent] = useState<Job[]>([]);
-
-  const refresh = useCallback(() => {
-    setRecent(getRecentlyViewedJobs(getAllJobs()));
-  }, []);
-
-  useEffect(() => {
-    refresh();
-    window.addEventListener("recently-viewed-changed", refresh);
-    return () => window.removeEventListener("recently-viewed-changed", refresh);
-  }, [refresh]);
+  const recent = useRecentlyViewedList();
 
   if (recent.length === 0) return null;
 

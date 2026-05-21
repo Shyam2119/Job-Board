@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo } from "react";
 import {
   MapPin,
   DollarSign,
@@ -16,7 +16,8 @@ import { Separator } from "@/components/ui/separator";
 import { BookmarkButton } from "@/components/jobs/bookmark-button";
 import { ApplyButton } from "@/components/jobs/apply-button";
 import { JobCard } from "@/components/jobs/job-card";
-import { addRecentlyViewed, getAllJobs, getRelatedJobs } from "@/lib/jobs";
+import { addRecentlyViewed, getRelatedJobs } from "@/lib/jobs";
+import { useClientJobs } from "@/hooks/use-client-jobs";
 import { RecentlyViewedSidebar } from "@/components/jobs/recently-viewed-sidebar";
 import { formatDate } from "@/lib/utils";
 
@@ -25,16 +26,16 @@ interface JobDetailViewProps {
 }
 
 export function JobDetailView({ initialJob }: JobDetailViewProps) {
-  const [job, setJob] = useState(initialJob);
-  const [related, setRelated] = useState<Job[]>([]);
+  const jobs = useClientJobs();
+  const job = useMemo(
+    () => jobs.find((j) => j.id === initialJob.id) ?? initialJob,
+    [jobs, initialJob]
+  );
+  const related = useMemo(() => getRelatedJobs(job), [job]);
 
   useEffect(() => {
-    const all = getAllJobs();
-    const found = all.find((j) => j.id === initialJob.id) ?? initialJob;
-    setJob(found);
-    setRelated(getRelatedJobs(found));
-    addRecentlyViewed(found.id);
-  }, [initialJob]);
+    addRecentlyViewed(job.id);
+  }, [job.id]);
 
   return (
     <div className="mx-auto max-w-7xl animate-in px-4 py-8 sm:px-6 lg:px-8">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import {
   User,
   Briefcase,
@@ -25,7 +25,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FILTER_CITIES } from "@/data/filter-constants";
 import {
   calculateProfileCompletion,
-  defaultProfile,
   getInitials,
   getProfile,
   saveProfile,
@@ -33,7 +32,6 @@ import {
 import type {
   Certification,
   Education,
-  ProfileSkill,
   SkillProficiency,
   UserProfile,
   WorkExperience,
@@ -66,16 +64,12 @@ function uid() {
 }
 
 export function ProfilePage() {
-  const [profile, setProfile] = useState<UserProfile>(defaultProfile);
+  const [profile, setProfile] = useState<UserProfile>(() => getProfile());
   const [tab, setTab] = useState<(typeof TABS)[number]["id"]>("personal");
   const [skillSearch, setSkillSearch] = useState("");
   const [showExpForm, setShowExpForm] = useState(false);
   const [showEduForm, setShowEduForm] = useState(false);
   const [showCertForm, setShowCertForm] = useState(false);
-
-  useEffect(() => {
-    setProfile(getProfile());
-  }, []);
 
   const persist = useCallback((next: UserProfile) => {
     setProfile(next);

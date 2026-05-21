@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { JobsListing } from "@/components/jobs/jobs-listing";
+import { JobsListingShell } from "@/components/jobs/jobs-listing-shell";
 import { createMetadata } from "@/lib/metadata";
 
 export const metadata = createMetadata({
@@ -20,7 +20,7 @@ function JobsListingFallback() {
 export default function JobsPage() {
   return (
     <Suspense fallback={<JobsListingFallback />}>
-      <JobsListing />
+      <JobsListingShell />
     </Suspense>
   );
 }

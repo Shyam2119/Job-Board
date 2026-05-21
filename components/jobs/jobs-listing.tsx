@@ -11,38 +11,27 @@ import { JobCard } from "@/components/jobs/job-card";
 import { JobCardSkeleton } from "@/components/jobs/job-card-skeleton";
 import { Pagination } from "@/components/jobs/pagination";
 import { RecentlyViewedSidebar } from "@/components/jobs/recently-viewed-sidebar";
+import { useClientJobs } from "@/hooks/use-client-jobs";
 import { useDebounce } from "@/hooks/use-debounce";
 import {
   defaultBrowseFilters,
   filterJobsAdvanced,
   sortJobs,
 } from "@/lib/browse-filters";
-import { getAllJobs, JOBS_PER_PAGE } from "@/lib/jobs";
-import type {
-  JobFilters,
-  JobCategory,
-  JobType,
-  SortOption,
-  WorkMode,
-} from "@/types/job";
+import { parseUrlFilters } from "@/lib/parse-url-filters";
+import { JOBS_PER_PAGE } from "@/lib/jobs";
+import type { JobFilters, SortOption } from "@/types/job";
 
 export function JobsListing() {
   const searchParams = useSearchParams();
-  const [jobs, setJobs] = useState(() => getAllJobs());
+  const jobs = useClientJobs();
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [sort, setSort] = useState<SortOption>("relevant");
-  const [filters, setFilters] = useState<JobFilters>(() => ({
-    ...defaultBrowseFilters,
-    query: searchParams.get("q") ?? "",
-    categories: searchParams.get("category")
-      ? [searchParams.get("category") as JobCategory]
-      : [],
-    types: searchParams.get("type")
-      ? [searchParams.get("type") as JobType]
-      : [],
-  }));
+  const [filters, setFilters] = useState<JobFilters>(() =>
+    parseUrlFilters(searchParams)
+  );
 
   const debouncedQuery = useDebounce(filters.query ?? "", 300);
 
@@ -52,29 +41,9 @@ export function JobsListing() {
   );
 
   useEffect(() => {
-    setJobs(getAllJobs());
     const timer = setTimeout(() => setLoading(false), 600);
     return () => clearTimeout(timer);
   }, []);
-
-  useEffect(() => {
-    const category = searchParams.get("category");
-    const type = searchParams.get("type");
-    const location = searchParams.get("location");
-    const workMode = searchParams.get("workMode");
-    const q = searchParams.get("q");
-
-    setFilters((prev) => ({
-      ...prev,
-      query: q ?? prev.query ?? "",
-      categories: category ? [category as JobCategory] : prev.categories,
-      types: type ? [type as JobType] : prev.types,
-      location: location ?? prev.location ?? "",
-      workModes: workMode
-        ? [workMode as WorkMode]
-        : prev.workModes ?? [],
-    }));
-  }, [searchParams]);
 
   const filteredJobs = useMemo(() => {
     const filtered = filterJobsAdvanced(jobs, debouncedFilters);
@@ -82,19 +51,22 @@ export function JobsListing() {
   }, [jobs, debouncedFilters, sort]);
 
   const totalPages = Math.max(1, Math.ceil(filteredJobs.length / JOBS_PER_PAGE));
+  const safePage = Math.min(currentPage, totalPages);
 
   const paginatedJobs = useMemo(() => {
-    const start = (currentPage - 1) * JOBS_PER_PAGE;
+    const start = (safePage - 1) * JOBS_PER_PAGE;
     return filteredJobs.slice(start, start + JOBS_PER_PAGE);
-  }, [filteredJobs, currentPage]);
+  }, [filteredJobs, safePage]);
 
-  useEffect(() => {
+  const setFiltersAndResetPage = useCallback((next: JobFilters) => {
+    setFilters(next);
     setCurrentPage(1);
-  }, [debouncedFilters, sort]);
+  }, []);
 
-  useEffect(() => {
-    if (currentPage > totalPages) setCurrentPage(totalPages);
-  }, [currentPage, totalPages]);
+  const handleSortChange = useCallback((next: SortOption) => {
+    setSort(next);
+    setCurrentPage(1);
+  }, []);
 
   const handleReset = useCallback(() => {
     setFilters({ ...defaultBrowseFilters });
@@ -115,14 +87,16 @@ export function JobsListing() {
         <div className="flex-1">
           <JobSearch
             value={filters.query ?? ""}
-            onChange={(query) => setFilters((prev) => ({ ...prev, query }))}
+            onChange={(query) =>
+              setFilters((prev) => ({ ...prev, query }))
+            }
           />
         </div>
         <MobileFilterDrawer
           open={mobileFiltersOpen}
           onOpenChange={setMobileFiltersOpen}
           filters={filters}
-          onChange={setFilters}
+          onChange={setFiltersAndResetPage}
           onReset={handleReset}
         />
       </div>
@@ -131,7 +105,7 @@ export function JobsListing() {
         <aside className="hidden w-72 shrink-0 lg:sticky lg:top-24 lg:block lg:self-start">
           <BrowseJobsFilterSidebar
             filters={filters}
-            onChange={setFilters}
+            onChange={setFiltersAndResetPage}
             onReset={handleReset}
           />
         </aside>
@@ -156,11 +130,11 @@ export function JobsListing() {
               )}
             </p>
             <div className="w-full sm:w-auto">
-              <JobSortDropdown value={sort} onChange={setSort} />
+              <JobSortDropdown value={sort} onChange={handleSortChange} />
             </div>
           </div>
 
-          <ActiveFilterChips filters={filters} onChange={setFilters} />
+          <ActiveFilterChips filters={filters} onChange={setFiltersAndResetPage} />
 
           {loading || isSearching ? (
             Array.from({ length: JOBS_PER_PAGE }).map((_, i) => (
@@ -183,7 +157,7 @@ export function JobsListing() {
 
           {!loading && !isSearching && filteredJobs.length > 0 && (
             <Pagination
-              currentPage={currentPage}
+              currentPage={safePage}
               totalPages={totalPages}
               onPageChange={(page) => {
                 setCurrentPage(page);

@@ -1,5 +1,5 @@
 import { jobs as mockJobs } from "@/data/jobs";
-import type { Job, JobFilters } from "@/types/job";
+import type { Job } from "@/types/job";
 
 const POSTED_JOBS_KEY = "job-board-posted-jobs";
 const SAVED_JOBS_KEY = "job-board-saved-jobs";
@@ -120,14 +120,20 @@ export function getSavedJobIds(): string[] {
 export function toggleSavedJob(id: string): boolean {
   const saved = getSavedJobIds();
   const index = saved.indexOf(id);
+  let isSaved: boolean;
   if (index >= 0) {
     saved.splice(index, 1);
     localStorage.setItem(SAVED_JOBS_KEY, JSON.stringify(saved));
-    return false;
+    isSaved = false;
+  } else {
+    saved.push(id);
+    localStorage.setItem(SAVED_JOBS_KEY, JSON.stringify(saved));
+    isSaved = true;
   }
-  saved.push(id);
-  localStorage.setItem(SAVED_JOBS_KEY, JSON.stringify(saved));
-  return true;
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event("saved-jobs-changed"));
+  }
+  return isSaved;
 }
 
 export function isJobSaved(id: string): boolean {

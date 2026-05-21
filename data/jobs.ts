@@ -1,4 +1,4 @@
-import type { Job, JobType } from "@/types/job";
+import type { Job } from "@/types/job";
 import { enrichJob } from "@/data/enrich-jobs";
 
 const rawJobs = [

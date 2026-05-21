@@ -1,10 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useState } from "react";
 import { Building2, Briefcase } from "lucide-react";
 import { JobCard } from "@/components/jobs/job-card";
-import { getJobsByCompany } from "@/lib/jobs";
+import { useCompanyJobs } from "@/hooks/use-client-jobs";
 import type { Job } from "@/types/job";
 
 interface CompanyProfileProps {
@@ -18,16 +17,8 @@ export function CompanyProfile({
   companySlug,
   companyName,
   logo,
-  initialJobs,
 }: CompanyProfileProps) {
-  const [companyJobs, setCompanyJobs] = useState(initialJobs);
-
-  useEffect(() => {
-    setCompanyJobs(getJobsByCompany(companySlug));
-    const refresh = () => setCompanyJobs(getJobsByCompany(companySlug));
-    window.addEventListener("storage", refresh);
-    return () => window.removeEventListener("storage", refresh);
-  }, [companySlug]);
+  const companyJobs = useCompanyJobs(companySlug);
 
   const description = getCompanyDescription(companyName);
 

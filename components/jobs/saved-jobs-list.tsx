@@ -1,29 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { Bookmark } from "lucide-react";
 import { JobCard } from "@/components/jobs/job-card";
 import { Button } from "@/components/ui/button";
-import { getAllJobs, getSavedJobs } from "@/lib/jobs";
+import { useSavedJobsList } from "@/hooks/use-client-jobs";
 
 export function SavedJobsList() {
-  const [savedJobs, setSavedJobs] = useState<ReturnType<typeof getSavedJobs>>([]);
-
-  const refresh = useCallback(() => {
-    setSavedJobs(getSavedJobs(getAllJobs()));
-  }, []);
-
-  useEffect(() => {
-    refresh();
-    const handler = () => refresh();
-    window.addEventListener("saved-jobs-changed", handler);
-    window.addEventListener("storage", handler);
-    return () => {
-      window.removeEventListener("saved-jobs-changed", handler);
-      window.removeEventListener("storage", handler);
-    };
-  }, [refresh]);
+  const savedJobs = useSavedJobsList();
 
   if (savedJobs.length === 0) {
     return (

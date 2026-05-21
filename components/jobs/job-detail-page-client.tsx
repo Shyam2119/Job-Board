@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { JobDetailView } from "@/components/jobs/job-detail-view";
-import { getAllJobs } from "@/lib/jobs";
+import { useClientJobs } from "@/hooks/use-client-jobs";
 import type { Job } from "@/types/job";
 
 interface JobDetailPageClientProps {
@@ -16,24 +16,11 @@ export function JobDetailPageClient({
   jobId,
   initialJob,
 }: JobDetailPageClientProps) {
-  const [job, setJob] = useState<Job | null>(initialJob);
-  const [loading, setLoading] = useState(!initialJob);
-
-  useEffect(() => {
-    if (!initialJob) {
-      const found = getAllJobs().find((j) => j.id === jobId);
-      setJob(found ?? null);
-      setLoading(false);
-    }
-  }, [jobId, initialJob]);
-
-  if (loading) {
-    return (
-      <div className="mx-auto max-w-7xl px-4 py-16 text-center text-muted-foreground">
-        Loading job details...
-      </div>
-    );
-  }
+  const jobs = useClientJobs();
+  const job = useMemo(
+    () => initialJob ?? jobs.find((j) => j.id === jobId) ?? null,
+    [initialJob, jobs, jobId]
+  );
 
   if (!job) {
     return (

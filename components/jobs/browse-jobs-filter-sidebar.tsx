@@ -3,7 +3,6 @@
 import { useState, KeyboardEvent } from "react";
 import { Filter, RotateCcw, Star, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
