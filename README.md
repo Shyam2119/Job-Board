@@ -39,17 +39,6 @@ TalentFlow is a sleek, premium, production-ready job board platform built with *
 
 ---
 
-## 📸 Screenshots
-
-> [!NOTE]
-> Below are placeholders for application screenshots. Add your actual screenshots to the `/public/screenshots` directory and update the paths.
-
-| Desktop Preview | Mobile Preview |
-| --- | --- |
-| ![Desktop View Placeholder](https://placehold.co/800x450/0a1628/38bdf8?text=TalentFlow+Desktop+Interface) | ![Mobile View Placeholder](https://placehold.co/300x550/0a1628/38bdf8?text=TalentFlow+Mobile+UI) |
-
----
-
 ## 🚀 Getting Started
 
 Follow these steps to run TalentFlow locally on your development machine.
