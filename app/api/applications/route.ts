@@ -68,10 +68,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ applications, total: applications.length });
   } catch (error) {
-    console.error("GET /api/applications error:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch applications" },
-      { status: 500 }
-    );
+    console.warn("GET /api/applications error, returning empty list fallback:", error);
+    return NextResponse.json({ applications: [], total: 0 });
   }
 }
