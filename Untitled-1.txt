@@ -1,3 +1,0 @@
-# 
-
-{"jobs":30,"companies":22,"seekers":1000,"placements":500}
