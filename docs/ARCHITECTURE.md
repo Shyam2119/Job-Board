@@ -1,47 +1,56 @@
 # Architecture
 
-TalentFlow is a **Next.js 16 App Router** application with no backend database. Seed data lives in `data/jobs.ts`; user data persists in the browser via `localStorage`.
+TalentFlow is a full-stack **Next.js 16 App Router** application backed by **Neon PostgreSQL** and **Prisma ORM**.
 
 ## High-level flow
 
 ```
-┌─────────────┐     ┌──────────────────┐     ┌─────────────────┐
-│  app/ pages │────▶│ components/      │────▶│ lib/ + hooks/   │
-│  (routes)   │     │ (UI + features)  │     │ (logic + store) │
-└─────────────┘     └──────────────────┘     └────────┬────────┘
-                                                      │
-                        ┌─────────────────────────────┴─────────────────────────────┐
-                        ▼                             ▼                             ▼
-                 data/jobs.ts              localStorage (client)           types/
-                 enrich-jobs.ts            posted, saved, recent, profile
+┌─────────────────────────────────────────────────────────┐
+│                    Browser Client                       │
+│  (Next.js React — App Router, Tailwind CSS v4)          │
+│  Pages: /, /jobs, /jobs/[id], /companies, /dashboard,  │
+│         /saved, /post-job, /profile                     │
+└────────────────────────────┬────────────────────────────┘
+                             │ HTTP fetch
+┌────────────────────────────▼────────────────────────────┐
+│              Next.js API Routes (Backend)               │
+│  GET/POST /api/jobs         → Jobs CRUD                 │
+│  GET      /api/jobs/[id]   → Single job                 │
+│  GET      /api/companies   → Company list               │
+│  GET      /api/stats       → Platform stats             │
+│  GET/POST /api/applications → Job applications         │
+│  GET/POST /api/saved       → Toggle bookmarks          │
+│  GET/PUT  /api/profile     → User profile               │
+└────────────────────────────┬────────────────────────────┘
+                             │ Prisma Client
+┌────────────────────────────▼────────────────────────────┐
+│        PostgreSQL — Neon Serverless Database             │
+│  Tables: Job, Application, SavedJob, UserProfile        │
+└─────────────────────────────────────────────────────────┘
 ```
 
 ## Directory layout
 
 | Path | Role |
 | --- | --- |
-| `app/` | Routes, `layout.tsx`, `loading.tsx`, `error.tsx`, `not-found.tsx` |
+| `app/` | Next.js App Router pages and `/api` REST route handlers |
 | `components/home/` | Hero, stats, carousel, category links |
 | `components/jobs/` | Listing, filters, cards, detail, post form, modals |
-| `components/layout/` | Header, footer, theme toggle, static page shell |
-| `components/profile/` | Profile tabs and forms |
-| `lib/jobs.ts` | Job store snapshot, CRUD for posted/saved/recent |
-| `lib/browse-filters.ts` | Filter + sort + pagination |
-| `lib/parse-url-filters.ts` | URL `searchParams` → filter state |
-| `hooks/use-client-jobs.ts` | `useSyncExternalStore` for reactive job lists |
+| `components/companies/` | Company grid and individual profile pages |
+| `components/dashboard/` | Recruiter portal with stats and applications |
+| `lib/prisma.ts` | Prisma Client singleton |
+| `lib/browse-filters.ts` | Client/server filter and sort logic |
+| `hooks/use-jobs.ts` | React hook fetching `/api/jobs` |
+| `hooks/use-saved-jobs.ts` | React hook interacting with `/api/saved` |
+| `prisma/` | Database schema (`schema.prisma`) and seed script |
 
-## Client state pattern
+## Database & Session State
 
-To avoid infinite re-renders with `useSyncExternalStore`, `getJobsStoreSnapshot()` returns a **stable array reference** until `invalidateJobsCache()` runs after a `localStorage` mutation.
-
-`JobsListingShell` uses `key={searchParams.toString()}` so URL filter changes remount the listing without `setState` in effects.
+- Critical entities (Jobs, Applications, Saved Bookmarks, User Profile) persist in **PostgreSQL**.
+- Anonymous users get a persistent `sessionId` stored in browser `localStorage` to sync saved bookmarks across sessions.
 
 ## Rendering
 
-- **Static:** Home, static pages, `/jobs` shell
-- **SSG:** `/jobs/[id]`, `/companies/[slug]` via `generateStaticParams`
-- **Client:** Filters, bookmarks, profile, post-job form, theme toggle
-
-## Theming
-
-CSS variables in `app/globals.css` (`:root` / `.dark`) map to Tailwind tokens. `ThemeProvider` (`next-themes`) sets the `class` on `<html>`.
+- **Dynamic (Server-Rendered):** `/`, `/jobs/[id]`, `/companies/[slug]`, `/api/*`
+- **Static Pages:** `/about`, `/contact`, `/privacy`, `/terms`, `/companies` shell
+- **Client Components:** Filters, application forms, bookmarks, theme toggle

@@ -1,51 +1,26 @@
-# Deployment & CI/CD
+# Deployment & CI/CD Guide
 
-## Production URL
+## Production Deployment
 
-[https://job-board-jet-delta.vercel.app](https://job-board-jet-delta.vercel.app)
+- **Live Site**: [https://job-board-jet-delta.vercel.app](https://job-board-jet-delta.vercel.app)
+- **Database**: Neon Serverless PostgreSQL (`postgresql://...`)
 
-## Automatic deploy (recommended)
+## Automatic Deploy (GitHub Actions)
 
-On every **push to `main`**, GitHub Actions (`.github/workflows/ci-cd.yml`) runs:
+On every **push to `main`**, GitHub Actions (`.github/workflows/ci-cd.yml`) executes:
 
-1. **CI** — `npm ci` → `lint` → `typecheck` → `build`
-2. **CD** — Vercel CLI: `vercel pull` → `vercel build --prod` → `vercel deploy --prebuilt --prod`
-3. **Pipeline status** — Fails only if CI fails; deploy failure is a warning (Vercel Git integration may still deploy)
+1. **Checkout & Node Setup** — Node.js 22 with npm caching.
+2. **Lint & Typecheck** — ESLint and TypeScript `tsc --noEmit`.
+3. **Security Audit** — High severity security checks.
+4. **Prisma Generate & Next Build** — Compiles Next.js app.
+5. **Vercel Deploy** — Deploys directly to production on Vercel.
 
-PRs to `main` get the same CI plus an optional **preview deploy** and PR comment with the preview URL.
+## Required Environment Variables
 
-## Required GitHub secrets
-
-| Secret | Use |
-| --- | --- |
-| `VERCEL_TOKEN` | Vercel personal access token |
-| `VERCEL_ORG_ID` | Team/user ID |
-| `VERCEL_PROJECT_ID` | Project ID |
-
-Add under **Settings → Secrets and variables → Actions**.
-
-Find IDs after `npx vercel link`: `cat .vercel/project.json`
-
-## Environment variables
-
-| Variable | Required | Notes |
-| --- | --- | --- |
-| `NEXT_PUBLIC_SITE_URL` | No | Canonical/OG URLs; set to your Vercel URL in production |
-
-Copy `.env.example` to `.env.local` for local development.
-
-## Manual deploy
-
-```bash
-npm ci
-npm run build
-npx vercel link    # first time
-npx vercel --prod
-```
-
-## Monitoring CI
-
-- Actions: [github.com/Shyam2119/Job-Board/actions](https://github.com/Shyam2119/Job-Board/actions)
-- Required check job: **Pipeline — Required checks** (CI must pass)
-
-See [.github/workflows/README.md](../.github/workflows/README.md) for troubleshooting.
+| Variable | Location | Description |
+|---|---|---|
+| `DATABASE_URL` | Vercel & GitHub Secrets | Neon pooled connection string |
+| `DIRECT_URL` | Vercel & GitHub Secrets | Neon direct connection string |
+| `VERCEL_TOKEN` | GitHub Secrets | Vercel personal access token |
+| `VERCEL_ORG_ID` | GitHub Secrets | Vercel organization ID |
+| `VERCEL_PROJECT_ID` | GitHub Secrets | Vercel project ID |

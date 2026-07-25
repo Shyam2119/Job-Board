@@ -1,44 +1,31 @@
-# Data API
+# Data & REST API Reference
 
-TalentFlow has **no HTTP API routes**. This document describes the **TypeScript data contract** and **browser persistence keys**.
+TalentFlow features 7 REST API endpoints built with Next.js Route Handlers (`app/api/`), connecting directly to Neon PostgreSQL via Prisma ORM.
 
-## Types
+## REST Endpoints
 
-Source of truth: `types/job.ts`, `types/profile.ts`.
+### 1. `GET /api/jobs`
+- **Query Params**: `q`, `category`, `workMode`, `type`, `experience`, `industry`, `featured`, `limit`, `page`
+- **Response**: `{ jobs: Job[], total: number, totalPages: number }`
 
-### `Job`
+### 2. `GET /api/jobs/[id]`
+- **Response**: `{ job: Job }` or 404
 
-Core fields: `id`, `title`, `company`, `companySlug`, `logo`, `location`, `city`, `salary`, `salaryMin`, `salaryMax`, `type`, `description`, `requirements[]`, `datePosted`, `category`, `featured`, `experience`, `workMode`, `industry`, `skills[]`, `noticePeriod`, `companyRating`, `applicantCount`.
+### 3. `POST /api/jobs`
+- **Body**: Posted job form details (`title`, `company`, `salary`, `description`, etc.)
+- **Response**: Created job object with CUID
 
-Posted jobs from the form are normalized in `lib/jobs.ts` → `normalizeJob()` so legacy `localStorage` entries remain compatible with filters.
+### 4. `GET /api/applications` & `POST /api/applications`
+- **POST Body**: `{ jobId, fullName, email, phone, coverLetter, resumeUrl }`
+- **Response**: Application record + increments job `applicantCount` in PostgreSQL
 
-### `UserProfile`
+### 5. `GET /api/saved` & `POST /api/saved`
+- **GET Params**: `sessionId`
+- **POST Body**: `{ jobId, sessionId }`
+- **Response**: Toggles saved bookmark state in PostgreSQL
 
-Stored under `talentflow-user-profile`. Includes contact info, experience/education arrays, skills, resume filename, and job preferences (title, work mode, type, salary range, notice period).
+### 6. `GET /api/companies`
+- **Response**: List of hiring companies with logos, job counts, and ratings
 
-## localStorage keys
-
-| Key | Module | Purpose |
-| --- | --- | --- |
-| `job-board-posted-jobs` | `lib/jobs.ts` | User-posted job listings (JSON array of `Job`) |
-| `job-board-saved-jobs` | `lib/jobs.ts` | Bookmarked job IDs (`string[]`) |
-| `job-board-recently-viewed` | `lib/jobs.ts` | Last 5 viewed job IDs |
-| `talentflow-user-profile` | `lib/profile-storage.ts` | Full profile object |
-
-## Read/write helpers
-
-| Function | File |
-| --- | --- |
-| `getAllJobs()` / `getJobsStoreSnapshot()` | `lib/jobs.ts` |
-| `savePostedJob(job)` | `lib/jobs.ts` |
-| `toggleSavedJob(id)` | `lib/jobs.ts` |
-| `addRecentlyViewed(id)` | `lib/jobs.ts` |
-| `getProfile()` / `saveProfile()` | `lib/profile-storage.ts` |
-| `filterJobs(jobs, filters)` | `lib/browse-filters.ts` |
-| `validatePostJobForm(values)` | `lib/validate-post-job.ts` |
-
-## URL query parameters (`/jobs`)
-
-Parsed by `lib/parse-url-filters.ts`, including: `q`, `category`, `type`, `workMode`, `experience`, `location`, `industry`, `skills`, `noticePeriod`, `datePosted`, `salaryMin`, `salaryMax`, `rating`, `sort`, `page`.
-
-Example: `/jobs?workMode=remote&category=Tech`
+### 7. `GET /api/stats`
+- **Response**: `{ jobs, companies, seekers, placements }`
