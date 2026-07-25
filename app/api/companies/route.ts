@@ -1,12 +1,13 @@
 // app/api/companies/route.ts
-// GET /api/companies — list all companies derived from the jobs table
+// GET /api/companies — list all companies derived from the jobs table (with static fallback)
 
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { jobs as staticJobs } from "@/data/jobs";
+import { getCompaniesFromJobs } from "@/lib/jobs";
 
 export async function GET() {
   try {
-    // Group jobs by company and aggregate counts
     const companyGroups = await prisma.job.groupBy({
       by: ["company", "companySlug", "logo"],
       _count: { id: true },
@@ -24,10 +25,11 @@ export async function GET() {
 
     return NextResponse.json({ companies });
   } catch (error) {
-    console.error("GET /api/companies error:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch companies" },
-      { status: 500 }
-    );
+    console.warn("GET /api/companies DB error, using static fallback:", error);
+    const companies = getCompaniesFromJobs(staticJobs).map((c) => ({
+      ...c,
+      rating: 4.5,
+    }));
+    return NextResponse.json({ companies });
   }
 }
