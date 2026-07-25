@@ -1,4 +1,8 @@
+// app/page.tsx — Home page
+// Featured jobs and company data fetched from Neon PostgreSQL via Prisma
+
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowRight, TrendingUp } from "lucide-react";
 import { HeroSection } from "@/components/home/hero-section";
 import { StatsSection } from "@/components/home/stats-section";
@@ -9,19 +13,69 @@ import { CategoryFilters } from "@/components/jobs/category-filters";
 import { JobCard } from "@/components/jobs/job-card";
 import { Button } from "@/components/ui/button";
 import { createMetadata } from "@/lib/metadata";
-import { jobs } from "@/data/jobs";
-import { getCompaniesFromJobs } from "@/lib/jobs";
+import { prisma } from "@/lib/prisma";
+import type { Job } from "@/types/job";
 
 export const metadata = createMetadata({
-  title: "Find Your Dream Career | Job Board",
+  title: "Find Your Dream Career | TalentFlow Job Board",
   description:
     "Browse 10,000+ jobs from top companies. Tech, design, marketing, finance, healthcare, and remote opportunities.",
   path: "/",
 });
 
-export default function HomePage() {
-  const featuredJobs = jobs.filter((j) => j.featured).slice(0, 6);
-  const companies = getCompaniesFromJobs(jobs);
+// Revalidate home page every 5 minutes to keep featured jobs fresh
+export const revalidate = 300;
+
+export default async function HomePage() {
+  // Fetch featured jobs and companies from the live database
+  const [rawFeatured, companiesData] = await Promise.all([
+    prisma.job.findMany({
+      where: { featured: true },
+      orderBy: { postedDate: "desc" },
+      take: 6,
+    }),
+    prisma.job.groupBy({
+      by: ["companySlug", "company", "logo"],
+      _count: { id: true },
+      orderBy: { _count: { id: "desc" } },
+      take: 6,
+    }),
+  ]);
+
+  // Map Prisma rows to Job type
+  const featuredJobs: Job[] = rawFeatured.map((raw) => ({
+    id: raw.id,
+    title: raw.title,
+    company: raw.company,
+    companySlug: raw.companySlug,
+    logo: raw.logo,
+    location: raw.location,
+    city: raw.city,
+    salary: raw.salary,
+    salaryMin: raw.salaryMin,
+    salaryMax: raw.salaryMax,
+    type: raw.type as Job["type"],
+    description: raw.description,
+    requirements: raw.requirements,
+    skills: raw.skills,
+    postedDate: raw.postedDate.toISOString(),
+    datePosted: raw.postedDate.toISOString().split("T")[0],
+    category: raw.category as Job["category"],
+    featured: raw.featured,
+    experience: raw.experience as Job["experience"],
+    workMode: raw.workMode as Job["workMode"],
+    industry: raw.industry as Job["industry"],
+    noticePeriod: raw.noticePeriod as Job["noticePeriod"],
+    companyRating: raw.companyRating,
+    applicantCount: raw.applicantCount,
+  }));
+
+  const companies = companiesData.map((c) => ({
+    name: c.company,
+    slug: c.companySlug,
+    logo: c.logo,
+    jobCount: c._count.id,
+  }));
 
   return (
     <>
@@ -82,16 +136,18 @@ export default function HomePage() {
           Explore employers with open positions
         </p>
         <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {companies.slice(0, 6).map((company) => (
+          {companies.map((company) => (
             <Link
               key={company.slug}
               href={`/companies/${company.slug}`}
               className="group flex items-center gap-4 rounded-xl border border-border bg-card p-5 transition-all duration-300 hover:-translate-y-0.5 hover:border-accent/30 hover:shadow-md"
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+              <Image
                 src={company.logo}
                 alt={company.name}
+                width={48}
+                height={48}
+                unoptimized
                 className="h-12 w-12 rounded-lg border border-border object-cover"
               />
               <div>
@@ -120,10 +176,15 @@ export default function HomePage() {
             Post your job listing and reach thousands of qualified candidates.
           </p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
-            <Button asChild size="lg" className="">
+            <Button asChild size="lg">
               <Link href="/post-job">Post a Job &mdash; It&apos;s Free</Link>
             </Button>
-            <Button asChild size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/10 bg-transparent">
+            <Button
+              asChild
+              size="lg"
+              variant="outline"
+              className="border-white/30 text-white hover:bg-white/10 bg-transparent"
+            >
               <Link href="/dashboard">Recruiter Dashboard</Link>
             </Button>
           </div>
