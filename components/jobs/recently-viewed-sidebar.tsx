@@ -1,14 +1,39 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { History } from "lucide-react";
-import { useRecentlyViewedList } from "@/hooks/use-client-jobs";
+import { getRecentlyViewedIds } from "@/lib/jobs";
+import type { Job } from "@/types/job";
 
 export function RecentlyViewedSidebar() {
-  const recent = useRecentlyViewedList();
+  const [recentJobs, setRecentJobs] = useState<Job[]>([]);
 
-  if (recent.length === 0) return null;
+  useEffect(() => {
+    const recentIds = getRecentlyViewedIds();
+    if (recentIds.length === 0) return;
+
+    let active = true;
+    fetch("/api/jobs?limit=100")
+      .then((r) => r.json())
+      .then((data: { jobs?: Job[] }) => {
+        if (active) {
+          const all = data.jobs ?? [];
+          const matched = recentIds
+            .map((id: string) => all.find((j: Job) => j.id === id))
+            .filter((j: Job | undefined): j is Job => j !== undefined);
+          setRecentJobs(matched);
+        }
+      })
+      .catch(console.error);
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  if (recentJobs.length === 0) return null;
 
   return (
     <div className="rounded-xl border border-border bg-card p-5 shadow-sm transition-all">
@@ -17,7 +42,7 @@ export function RecentlyViewedSidebar() {
         Recently Viewed
       </div>
       <ul className="space-y-3">
-        {recent.map((job) => (
+        {recentJobs.map((job) => (
           <li key={job.id}>
             <Link
               href={`/jobs/${job.id}`}

@@ -17,7 +17,6 @@ import { BookmarkButton } from "@/components/jobs/bookmark-button";
 import { ApplyButton } from "@/components/jobs/apply-button";
 import { JobCard } from "@/components/jobs/job-card";
 import { addRecentlyViewed, getRelatedJobs } from "@/lib/jobs";
-import { useClientJobs } from "@/hooks/use-client-jobs";
 import { RecentlyViewedSidebar } from "@/components/jobs/recently-viewed-sidebar";
 import { formatDate } from "@/lib/utils";
 
@@ -26,11 +25,7 @@ interface JobDetailViewProps {
 }
 
 export function JobDetailView({ initialJob }: JobDetailViewProps) {
-  const jobs = useClientJobs();
-  const job = useMemo(
-    () => jobs.find((j) => j.id === initialJob.id) ?? initialJob,
-    [jobs, initialJob]
-  );
+  const job = initialJob;
   const related = useMemo(() => getRelatedJobs(job), [job]);
 
   useEffect(() => {

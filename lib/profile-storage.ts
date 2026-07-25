@@ -1,4 +1,5 @@
 import type { UserProfile } from "@/types/profile";
+import { getSessionId } from "@/lib/session";
 
 const PROFILE_KEY = "talentflow-user-profile";
 
@@ -42,8 +43,20 @@ export function getProfile(): UserProfile {
 }
 
 export function saveProfile(profile: UserProfile): void {
-  localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
-  window.dispatchEvent(new Event("profile-updated"));
+  if (typeof window !== "undefined") {
+    localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
+    window.dispatchEvent(new Event("profile-updated"));
+
+    // Sync to PostgreSQL DB asynchronously
+    const sessionId = getSessionId();
+    if (sessionId && sessionId !== "server") {
+      fetch("/api/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId, profile }),
+      }).catch(console.error);
+    }
+  }
 }
 
 export function calculateProfileCompletion(profile: UserProfile): number {
