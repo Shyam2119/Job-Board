@@ -54,8 +54,8 @@ jobs:
 
       - name: Build application
         run: |
-          export DATABASE_URL="${DATABASE_URL:-postgresql://neondb_owner:npg_KNWPpR3EV6wu@ep-green-poetry-ayo995eg-pooler.c-5.us-east-2.aws.neon.tech/neondb?sslmode=require&connect_timeout=15}"
-          export DIRECT_URL="${DIRECT_URL:-postgresql://neondb_owner:npg_KNWPpR3EV6wu@ep-green-poetry-ayo995eg.c-5.us-east-2.aws.neon.tech/neondb?sslmode=require}"
+          export DATABASE_URL="${DATABASE_URL:-postgresql://placeholder_user:placeholder_pass@ep-placeholder.us-east-2.aws.neon.tech/neondb?sslmode=require}"
+          export DIRECT_URL="${DIRECT_URL:-postgresql://placeholder_user:placeholder_pass@ep-placeholder.us-east-2.aws.neon.tech/neondb?sslmode=require}"
           npm run build
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
