@@ -1,13 +1,14 @@
-# 💼 TalentFlow — Premium Modern Job Board
+# 💼 TalentFlow — Full-Stack Premium Job Board
 
 [![Live Demo](https://img.shields.io/badge/Demo-Vercel-blueviolet?style=for-the-badge&logo=vercel)](https://job-board-jet-delta.vercel.app)
 [![CI/CD](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-2088FF?style=for-the-badge&logo=githubactions&logoColor=white)](https://github.com/Shyam2119/Job-Board/actions)
-[![Tech Stack](https://img.shields.io/badge/Stack-Next.js%20%7C%20TS%20%7C%20Tailwind-blue?style=for-the-badge&logo=nextdotjs)](https://nextjs.org/)
+[![Tech Stack](https://img.shields.io/badge/Stack-Next.js%20%7C%20Prisma%20%7C%20PostgreSQL-blue?style=for-the-badge&logo=nextdotjs)](https://nextjs.org/)
+[![Database](https://img.shields.io/badge/Database-Neon%20PostgreSQL-00E699?style=for-the-badge&logo=postgresql)](https://neon.tech)
 [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](https://opensource.org/licenses/MIT)
 
 **Repository:** [github.com/Shyam2119/Job-Board](https://github.com/Shyam2119/Job-Board)
 
-TalentFlow is a sleek, premium, production-ready job board platform built with **Next.js (App Router)**, **TypeScript**, and **Tailwind CSS**. It is designed with visual excellence, fluid responsiveness, and premium UX at its core to connect developers, designers, and creatives with industry-leading companies.
+TalentFlow is a **production-grade, full-stack job board** built with **Next.js 16 (App Router)**, **Prisma ORM**, **PostgreSQL (Neon Serverless)**, and **Tailwind CSS v4**. It connects developers, designers, and tech professionals with leading companies — featuring a real database backend, REST API routes, recruiter dashboard, and premium UI.
 
 🚀 **Live Demo:** [https://job-board-jet-delta.vercel.app](https://job-board-jet-delta.vercel.app)
 
@@ -15,117 +16,170 @@ TalentFlow is a sleek, premium, production-ready job board platform built with *
 
 ## ✨ Features
 
-- **🔍 Advanced Real-Time Search & Filtering** — Sticky sidebar with date posted, experience, job type, work mode, ₹ LPA salary slider, location, industry, skills tags, notice period, and company rating filters.
-- **📁 Dynamic Job Postings** — Employers post jobs via a validated form; listings persist in `localStorage`.
-- **🔖 Bookmark & Saved Jobs** — Save jobs and track recently viewed listings (last 5).
-- **👤 Job Seeker Profile** — Full profile page with experience, education, skills, resume upload, and job preferences (`/profile`).
-- **🏢 Company Directory & Profiles** — Company pages with all open positions.
-- **📝 Application Modal** — Apply flow with form validation and toast notifications (Sonner).
-- **🎨 Premium HSL Dark/Light Mode** — Full-fledged, seamless toggle using `next-themes` with harmonious high-contrast colors that prevent eye strain.
-- **📱 Ultra-Responsive Mobile UX** — Mobile-first layout, custom hamburger drawers, and interactive micro-animations crafted using CSS transitions.
-- **📊 SEO & Social Metadata Ready** — Dynamically generated JSON-LD metadata, OpenGraph tags, and Twitter Cards to maximize organic search visibility and ensure rich preview cards when shared.
+- **🔍 Advanced Real-Time Search & Filtering** — 10+ filter types (experience, work mode, salary range, skills, notice period, company rating) all URL-synced.
+- **🗄️ PostgreSQL Database** — Real Neon serverless PostgreSQL backing all data. No localStorage for critical state.
+- **🔌 REST API Backend** — 7 API routes (`/api/jobs`, `/api/applications`, `/api/saved`, `/api/profile`, `/api/companies`, `/api/stats`) served via Next.js Route Handlers.
+- **📝 Job Applications** — Full application form that persists to PostgreSQL. Applicant count increments in real-time.
+- **🏢 Recruiter Dashboard** — `/dashboard` page with live job listings, application pipeline, and platform stats from the database.
+- **🔖 DB-backed Bookmarks** — Save/unsave jobs stored in PostgreSQL per anonymous session (no login required).
+- **👤 Persistent Profile** — Job seeker profile with experience, education, skills, certifications stored in the database.
+- **📁 Post-a-Job** — Employer job submission form that creates real database records immediately visible to all users.
+- **🏢 Company Directory** — Dynamic company profiles aggregated from the jobs table.
+- **🎨 Premium Dark/Light Theme** — HSL CSS variables with seamless `next-themes` toggle.
+- **📱 Mobile-First Responsive** — Mobile hamburger nav, slide-up filter drawers, adaptive layouts.
+- **📊 SEO Ready** — OpenGraph, Twitter Cards, canonical URLs, JSON-LD structured metadata on every page.
 
 ---
 
 ## 🛠️ Tech Stack
 
-- **Framework:** Next.js (App Router with Server/Client Components)
-- **Language:** TypeScript
-- **Styling:** Tailwind CSS (Modern HSL colors & CSS variables design tokens)
-- **UI Components:** Shadcn/ui-inspired custom components built on top of Radix UI primitives
-- **Icons:** Lucide React
-- **Theme Management:** Next Themes (Dark/Light mode)
-- **Persistence:** LocalStorage (for bookmarks and newly posted jobs)
+| Layer | Technology |
+|---|---|
+| **Framework** | Next.js 16 (App Router, Server & Client Components) |
+| **Language** | TypeScript 5 |
+| **Styling** | Tailwind CSS v4 (HSL CSS variables design tokens) |
+| **Database** | PostgreSQL — Neon Serverless |
+| **ORM** | Prisma v6 (type-safe DB access, migrations) |
+| **API** | Next.js Route Handlers (`app/api/`) |
+| **UI Primitives** | Radix UI (Dialog, Select, Checkbox, Slider, Dropdown) |
+| **Icons** | Lucide React |
+| **Theme** | next-themes (Dark/Light mode) |
+| **Notifications** | Sonner (toast notifications) |
+| **Fonts** | Geist Sans & Geist Mono |
+| **CI/CD** | GitHub Actions |
+| **Hosting** | Vercel |
+
+---
+
+## 🏗️ Architecture
+
+```
+┌─────────────────────────────────────────────────────┐
+│                    Browser Client                    │
+│  (Next.js React — App Router, Tailwind CSS v4)      │
+│  Pages: /, /jobs, /jobs/[id], /companies/[slug],   │
+│         /saved, /post-job, /profile, /dashboard     │
+└────────────────────┬────────────────────────────────┘
+                     │ HTTP fetch
+┌────────────────────▼────────────────────────────────┐
+│              Next.js API Routes (Backend)           │
+│  GET/POST /api/jobs         → Jobs CRUD             │
+│  GET       /api/jobs/[id]   → Single job            │
+│  GET       /api/companies   → Company list          │
+│  GET       /api/stats       → Platform stats        │
+│  GET/POST  /api/applications → Job applications     │
+│  GET/POST  /api/saved       → Toggle bookmarks      │
+│  GET/PUT   /api/profile     → User profile          │
+└────────────────────┬────────────────────────────────┘
+                     │ Prisma Client
+┌────────────────────▼────────────────────────────────┐
+│        PostgreSQL — Neon Serverless Database         │
+│  Tables: Job, Application, SavedJob, UserProfile    │
+└─────────────────────────────────────────────────────┘
+```
 
 ---
 
 ## 🚀 Getting Started
 
-Follow these steps to run TalentFlow locally on your development machine.
-
 ### Prerequisites
 
-- Node.js 18.x or higher
-- npm, yarn, or pnpm
+- Node.js 18.x or higher (22.x recommended)
+- npm
+- A [Neon](https://neon.tech) account (free tier works perfectly)
 
 ### Installation
 
-1. **Clone the Repository**
-   ```bash
-   git clone https://github.com/Shyam2119/Job-Board.git
-   cd Job-Board
-   ```
+```bash
+# 1. Clone the repository
+git clone https://github.com/Shyam2119/Job-Board.git
+cd Job-Board
 
-2. **Install Dependencies**
-   ```bash
-   npm install
-   ```
+# 2. Install dependencies
+npm install
 
-3. **Configure Environment Variables**
-   Copy the example environment file and set your deployment URL:
-   ```bash
-   cp .env.example .env.local
-   ```
+# 3. Configure environment variables
+cp .env.example .env.local
+# Edit .env.local and add your Neon DATABASE_URL and DIRECT_URL
 
-4. **Run the Development Server**
-   ```bash
-   npm run dev
-   ```
-   Open [http://localhost:3000](http://localhost:3000) in your browser to view the application.
+# 4. Push schema to database
+npm run db:push
 
-5. **Build for Production**
-   ```bash
-   npm run build
-   ```
+# 5. Seed the database (30 jobs)
+npm run db:seed
+
+# 6. Start the development server
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) to view the app.
 
 ---
 
 ## ⚙️ Environment Variables
 
-The application supports the following environment variables. You can configure them in `.env.local`:
+| Variable | Description | Required |
+|---|---|---|
+| `DATABASE_URL` | Neon pooled connection string (serverless-safe) | ✅ Yes |
+| `DIRECT_URL` | Neon direct connection string (for migrations) | ✅ Yes |
+| `NEXT_PUBLIC_SITE_URL` | Base URL for metadata / OpenGraph | No |
 
-| Variable Name | Description | Default Value | Required |
-| :--- | :--- | :--- | :--- |
-| `NEXT_PUBLIC_SITE_URL` | Base URL of the deployed application (for metadata/canonical URLs) | `https://talentflow.jobs` | No |
+Get your connection strings from [neon.tech](https://neon.tech) → Project → Settings → Connection Details.
 
 ---
 
-## 🤝 Contributing
+## 📜 Available Scripts
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed PR guidelines, branch naming, and CI requirements.
+| Command | Description |
+|---|---|
+| `npm run dev` | Start Next.js dev server with Turbopack |
+| `npm run build` | Create optimised production build |
+| `npm run start` | Serve the production build |
+| `npm run lint` | Run ESLint |
+| `npm run typecheck` | Run TypeScript (no emit) |
+| `npm run db:push` | Push Prisma schema to the database |
+| `npm run db:seed` | Seed 30 jobs into the database |
+| `npm run db:generate` | Regenerate Prisma Client |
+| `npm run db:studio` | Open Prisma Studio (visual DB explorer) |
 
-Quick start:
-
-1. Fork the repo and create a branch: `git checkout -b feature/amazing-feature`
-2. Run checks: `npm run lint && npx tsc --noEmit && npm run build`
-3. Open a Pull Request to `main` — CI and Vercel preview deploys run automatically
+---
 
 ## 🔄 CI/CD
 
 GitHub Actions runs on every PR and push to `main`:
 
-- **CI:** ESLint → TypeScript → `npm run build`
-- **CD (main):** Deploy to Vercel production + commit comment with URL
+- **CI:** ESLint → TypeScript → Security Audit → Prisma Generate → Build
+- **CD (main):** Deploy to Vercel production + commit comment with URL  
 - **Preview (PRs):** Vercel preview URL posted on the pull request
 
-Configure secrets: `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`. See [.github/workflows/README.md](.github/workflows/README.md).
+**Required GitHub Secrets:**
+
+| Secret | Description |
+|---|---|
+| `VERCEL_TOKEN` | Vercel personal access token |
+| `VERCEL_ORG_ID` | Vercel organisation ID |
+| `VERCEL_PROJECT_ID` | Vercel project ID |
+| `DATABASE_URL` | Neon pooled connection string |
+| `DIRECT_URL` | Neon direct connection string |
+
+---
 
 ## 📚 Documentation
 
 | Doc | Description |
-| --- | --- |
-| [docs/README.md](docs/README.md) | Documentation index |
+|---|---|
 | [DOCUMENTATION.md](DOCUMENTATION.md) | Complete feature & technical reference |
-| [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | CI/CD and Vercel deployment |
+| [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | CI/CD and Vercel deployment guide |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Project structure and data flow |
-| [docs/API.md](docs/API.md) | Types and `localStorage` keys |
+| [docs/API.md](docs/API.md) | API Routes reference |
 
 ---
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
 
 ---
 
-*Built with ❤️ for the Software Engineer Assessment.*
+*Built with ❤️ using AI-assisted development for the Software Engineer Assessment.*
+*Stack: Next.js · TypeScript · Prisma · PostgreSQL (Neon) · Tailwind CSS · GitHub Actions · Vercel*

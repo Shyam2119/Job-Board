@@ -6,11 +6,12 @@ import { Button } from "@/components/ui/button";
 import { ApplicationModal } from "@/components/jobs/application-modal";
 
 interface ApplyButtonProps {
+  jobId: string;
   jobTitle: string;
   company: string;
 }
 
-export function ApplyButton({ jobTitle, company }: ApplyButtonProps) {
+export function ApplyButton({ jobId, jobTitle, company }: ApplyButtonProps) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -26,6 +27,7 @@ export function ApplyButton({ jobTitle, company }: ApplyButtonProps) {
       <ApplicationModal
         open={open}
         onOpenChange={setOpen}
+        jobId={jobId}
         jobTitle={jobTitle}
         company={company}
       />

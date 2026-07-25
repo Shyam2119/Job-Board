@@ -3,8 +3,7 @@
 import { Bookmark } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { toggleSavedJob } from "@/lib/jobs";
-import { useBookmarkStatus } from "@/hooks/use-client-jobs";
+import { useSavedJobs } from "@/hooks/use-saved-jobs";
 import { cn } from "@/lib/utils";
 
 interface BookmarkButtonProps {
@@ -13,12 +12,14 @@ interface BookmarkButtonProps {
 }
 
 export function BookmarkButton({ jobId, className }: BookmarkButtonProps) {
-  const saved = useBookmarkStatus(jobId);
+  const { isSaved, toggle } = useSavedJobs();
+  const saved = isSaved(jobId);
 
-  const handleClick = (e: React.MouseEvent) => {
+  const handleClick = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    const isNowSaved = toggleSavedJob(jobId);
+
+    const isNowSaved = await toggle(jobId);
     if (isNowSaved) {
       toast.success("Job saved", {
         description: "View it anytime in Saved Jobs.",

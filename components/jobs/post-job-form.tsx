@@ -17,7 +17,6 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { categories, jobTypes } from "@/data/jobs";
-import { savePostedJob } from "@/lib/jobs";
 import { slugify, cn } from "@/lib/utils";
 import {
   POST_JOB_FIELD_ORDER,
@@ -25,7 +24,7 @@ import {
   type PostJobFormErrors,
   type PostJobFormValues,
 } from "@/lib/validate-post-job";
-import type { Job, JobCategory, JobType } from "@/types/job";
+import type { JobCategory, JobType } from "@/types/job";
 
 const initialForm: PostJobFormValues = {
   title: "",
@@ -104,49 +103,53 @@ export function PostJobForm() {
     const lpaMin = parseLpa(form.salaryMin, 8);
     const lpaMax = parseLpa(form.salaryMax, 12);
 
-    const today = new Date().toISOString().split("T")[0];
+    try {
+      const res = await fetch("/api/jobs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: form.title.trim(),
+          company: form.company.trim(),
+          companySlug,
+          location: form.location.trim(),
+          city: form.location.split(",")[0]?.trim() ?? form.location.trim(),
+          salary:
+            form.salary.trim() ||
+            `₹${lpaMin}L – ₹${lpaMax}L per annum`,
+          salaryMin: lpaMin,
+          salaryMax: lpaMax,
+          type: form.type,
+          description: form.description.trim(),
+          requirements: form.requirements
+            .split("\n")
+            .map((r: string) => r.trim())
+            .filter(Boolean),
+          category: form.category,
+          workMode: form.location.toLowerCase().includes("remote")
+            ? "remote"
+            : "hybrid",
+        }),
+      });
 
-    const job: Job = {
-      id: `posted-${Date.now()}`,
-      title: form.title.trim(),
-      company: form.company.trim(),
-      companySlug,
-      logo: `https://ui-avatars.com/api/?name=${encodeURIComponent(form.company)}&background=1e3a5f&color=38bdf8&bold=true`,
-      location: form.location.trim(),
-      city: form.location.split(",")[0]?.trim() ?? form.location.trim(),
-      salary:
-        form.salary.trim() ||
-        `₹${lpaMin}L – ₹${lpaMax}L per annum`,
-      salaryMin: lpaMin,
-      salaryMax: lpaMax,
-      type: form.type,
-      description: form.description.trim(),
-      requirements: form.requirements
-        .split("\n")
-        .map((r) => r.trim())
-        .filter(Boolean),
-      postedDate: today,
-      datePosted: today,
-      category: form.category,
-      featured: false,
-      experience: "mid",
-      workMode: form.location.toLowerCase().includes("remote")
-        ? "remote"
-        : "hybrid",
-      industry: "IT",
-      skills: ["Communication"],
-      noticePeriod: "1-month",
-      companyRating: 4.0,
-      applicantCount: 0,
-    };
+      if (!res.ok) {
+        const err = (await res.json()) as { error?: string };
+        throw new Error(err.error ?? "Failed to post job");
+      }
 
-    savePostedJob(job);
-    await new Promise((r) => setTimeout(r, 500));
-    setLoading(false);
-    toast.success("Job posted successfully!", {
-      description: "Your listing is now live.",
-    });
-    router.push(`/jobs/${job.id}`);
+      const job = (await res.json()) as { id: string };
+
+      toast.success("Job posted successfully!", {
+        description: "Your listing is now live in the database.",
+      });
+      router.push(`/jobs/${job.id}`);
+    } catch (err) {
+      toast.error("Failed to post job", {
+        description:
+          err instanceof Error ? err.message : "Please try again.",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const fieldClass = (key: keyof PostJobFormValues) =>

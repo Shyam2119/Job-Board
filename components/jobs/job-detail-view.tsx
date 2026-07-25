@@ -132,7 +132,7 @@ export function JobDetailView({ initialJob }: JobDetailViewProps) {
               Join {job.company} and make an impact in {job.category}.
             </p>
             <div className="mt-6">
-              <ApplyButton jobTitle={job.title} company={job.company} />
+              <ApplyButton jobId={job.id} jobTitle={job.title} company={job.company} />
             </div>
             <Separator className="my-6" />
             <div className="space-y-3 text-sm">

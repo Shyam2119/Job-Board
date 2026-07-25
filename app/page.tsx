@@ -3,6 +3,8 @@ import { ArrowRight, TrendingUp } from "lucide-react";
 import { HeroSection } from "@/components/home/hero-section";
 import { StatsSection } from "@/components/home/stats-section";
 import { CompaniesCarousel } from "@/components/home/companies-carousel";
+import { HowItWorksSection } from "@/components/home/how-it-works";
+import { TestimonialsSection } from "@/components/home/testimonials-section";
 import { CategoryFilters } from "@/components/jobs/category-filters";
 import { JobCard } from "@/components/jobs/job-card";
 import { Button } from "@/components/ui/button";
@@ -106,6 +108,9 @@ export default function HomePage() {
         </div>
       </section>
 
+      <HowItWorksSection />
+      <TestimonialsSection />
+
       <section className="animate-slide-up animate-delay-200 bg-navy py-16 text-white">
         <div className="mx-auto max-w-7xl px-4 text-center sm:px-6 lg:px-8">
           <h2 className="text-2xl font-bold sm:text-3xl">
@@ -114,9 +119,14 @@ export default function HomePage() {
           <p className="mx-auto mt-4 max-w-xl text-slate-300">
             Post your job listing and reach thousands of qualified candidates.
           </p>
-          <Button asChild size="lg" className="mt-8">
-            <Link href="/post-job">Post a Job — It&apos;s Free</Link>
-          </Button>
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
+            <Button asChild size="lg" className="">
+              <Link href="/post-job">Post a Job &mdash; It&apos;s Free</Link>
+            </Button>
+            <Button asChild size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/10 bg-transparent">
+              <Link href="/dashboard">Recruiter Dashboard</Link>
+            </Button>
+          </div>
         </div>
       </section>
     </>
