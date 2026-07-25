@@ -198,7 +198,7 @@ export function DashboardClient() {
                   <p className="text-sm text-muted-foreground">
                     No applications yet.
                     <br />
-                    They'll appear here once candidates apply.
+                    They&apos;ll appear here once candidates apply.
                   </p>
                 </div>
               )

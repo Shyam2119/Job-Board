@@ -1,6 +1,5 @@
 // hooks/use-jobs.ts
 // Fetches jobs from /api/jobs with optional filters
-// This replaces the localStorage-merged useClientJobs hook
 
 "use client";
 
@@ -16,7 +15,7 @@ interface UseJobsOptions {
   featured?: boolean;
   limit?: number;
   page?: number;
-  enabled?: boolean; // set to false to skip the fetch
+  enabled?: boolean;
 }
 
 interface UseJobsResult {
@@ -44,17 +43,14 @@ export function useJobs(options: UseJobsOptions = {}): UseJobsResult {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(enabled);
   const [error, setError] = useState<string | null>(null);
   const [tick, setTick] = useState(0);
 
   const refetch = useCallback(() => setTick((t) => t + 1), []);
 
   useEffect(() => {
-    if (!enabled) {
-      setLoading(false);
-      return;
-    }
+    if (!enabled) return;
 
     const params = new URLSearchParams();
     if (q) params.set("q", q);
@@ -65,9 +61,6 @@ export function useJobs(options: UseJobsOptions = {}): UseJobsResult {
     if (featured) params.set("featured", "true");
     if (limit) params.set("limit", String(limit));
     if (page > 1) params.set("page", String(page));
-
-    setLoading(true);
-    setError(null);
 
     const url = `/api/jobs${params.toString() ? `?${params}` : ""}`;
 

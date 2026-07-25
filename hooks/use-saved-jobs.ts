@@ -1,6 +1,5 @@
 // hooks/use-saved-jobs.ts
 // Database-backed saved jobs hook using /api/saved
-// Replaces the localStorage-based implementation
 
 "use client";
 
@@ -15,19 +14,26 @@ export function useSavedJobs() {
   useEffect(() => {
     const sessionId = getSessionId();
     if (sessionId === "server") {
-      setLoading(false);
+      // Return early without synchronous setState in effect
       return;
     }
 
+    let active = true;
     fetch(`/api/saved?sessionId=${encodeURIComponent(sessionId)}`)
       .then((r) => r.json())
       .then((data: { savedIds?: string[] }) => {
-        setSavedIds(new Set(data.savedIds ?? []));
+        if (active) setSavedIds(new Set(data.savedIds ?? []));
       })
       .catch(() => {
         /* silent fail */
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
   }, []);
 
   // Toggle a saved job in the DB

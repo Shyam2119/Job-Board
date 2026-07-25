@@ -25,17 +25,11 @@ const JOBS_PER_PAGE = 10;
 function buildApiParams(filters: JobFilters, q: string): URLSearchParams {
   const p = new URLSearchParams();
   if (q) p.set("q", q);
-  // category is JobCategory | "" — skip empty string
   if (filters.category) p.set("category", String(filters.category));
-  // workModes is WorkMode[] — send first selected (API supports one workMode)
   if (filters.workModes?.length) p.set("workMode", filters.workModes[0]);
-  // types is JobType[] — send first selected
   if (filters.types?.length) p.set("type", filters.types[0]);
-  // experience is ExperienceLevel[] — send first selected
   if (filters.experience?.length) p.set("experience", filters.experience[0]);
-  // industries is Industry[] — send first selected
   if (filters.industries?.length) p.set("industry", filters.industries[0]);
-  // Large page size — client handles further sort/page
   p.set("limit", "100");
   return p;
 }
@@ -52,21 +46,31 @@ export function JobsListing() {
     parseUrlFilters(searchParams)
   );
 
+  const [currentTimestamp] = useState(() => Date.now());
   const debouncedQuery = useDebounce(filters.query ?? "", 350);
 
   // Fetch from the database whenever filters or search term changes
   useEffect(() => {
-    setLoading(true);
+    let active = true;
     const params = buildApiParams(filters, debouncedQuery);
     fetch(`/api/jobs?${params}`)
       .then((r) => r.json())
       .then((data: { jobs?: Job[]; total?: number }) => {
-        setJobs(data.jobs ?? []);
-        setTotal(data.total ?? 0);
+        if (active) {
+          setJobs(data.jobs ?? []);
+          setTotal(data.total ?? 0);
+          setLoading(false);
+        }
       })
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, [debouncedQuery, filters.category, filters.workModes, filters.types, filters.experience, filters.industries]);
+      .catch((err) => {
+        console.error(err);
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [debouncedQuery, filters]);
 
   // Client-side sort (date, salary) + client-side filters not supported by the API
   const sortedJobs = useMemo(() => sortJobs(jobs, sort), [jobs, sort]);
@@ -78,12 +82,12 @@ export function JobsListing() {
     const daysMap: Record<string, number> = { "24h": 1, "3d": 3, "7d": 7, "30d": 30 };
     const days = daysMap[dateFilter];
     if (!days) return sortedJobs;
-    const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
+    const cutoff = currentTimestamp - days * 24 * 60 * 60 * 1000;
     return sortedJobs.filter((j) => {
       const d = j.postedDate ? new Date(j.postedDate).getTime() : 0;
       return d >= cutoff;
     });
-  }, [sortedJobs, filters.datePosted]);
+  }, [sortedJobs, filters.datePosted, currentTimestamp]);
 
   // Salary range client filter
   const salaryFiltered = useMemo(() => {
@@ -104,6 +108,7 @@ export function JobsListing() {
   }, [salaryFiltered, safePage]);
 
   const setFiltersAndResetPage = useCallback((next: JobFilters) => {
+    setLoading(true);
     setFilters(next);
     setCurrentPage(1);
   }, []);
@@ -114,6 +119,7 @@ export function JobsListing() {
   }, []);
 
   const handleReset = useCallback(() => {
+    setLoading(true);
     setFilters({ ...defaultBrowseFilters });
     setCurrentPage(1);
   }, []);
@@ -130,9 +136,10 @@ export function JobsListing() {
         <div className="flex-1">
           <JobSearch
             value={filters.query ?? ""}
-            onChange={(query) =>
-              setFilters((prev) => ({ ...prev, query }))
-            }
+            onChange={(query) => {
+              setLoading(true);
+              setFilters((prev) => ({ ...prev, query }));
+            }}
           />
         </div>
         <MobileFilterDrawer
