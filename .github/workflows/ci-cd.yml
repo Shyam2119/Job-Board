@@ -17,6 +17,10 @@ permissions:
 
 env:
   NEXT_PUBLIC_SITE_URL: https://job-board-jet-delta.vercel.app
+  # Provide a dummy DATABASE_URL so prisma generate + next build pass in CI
+  # Real connections only happen at runtime (Vercel uses environment secrets)
+  DATABASE_URL: ${{ secrets.DATABASE_URL }}
+  DIRECT_URL: ${{ secrets.DIRECT_URL }}
 
 jobs:
   ci:
@@ -49,12 +53,15 @@ jobs:
 
       - name: Generate Prisma client
         run: npx prisma generate
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL || 'postgresql://user:pass@host/db?sslmode=require' }}
 
       - name: Build application
         run: npm run build
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL || 'postgresql://placeholder:placeholder@localhost/placeholder' }}
-          DIRECT_URL: ${{ secrets.DIRECT_URL || 'postgresql://placeholder:placeholder@localhost/placeholder' }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL || 'postgresql://user:pass@host/db?sslmode=require' }}
+          DIRECT_URL: ${{ secrets.DIRECT_URL || 'postgresql://user:pass@host/db?sslmode=require' }}
+          NEXT_PUBLIC_SITE_URL: https://job-board-jet-delta.vercel.app
 
   deploy-production:
     name: CD — Deploy to Vercel (Production)

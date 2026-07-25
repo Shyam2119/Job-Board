@@ -11,20 +11,39 @@ import { JobCard } from "@/components/jobs/job-card";
 import { JobCardSkeleton } from "@/components/jobs/job-card-skeleton";
 import { Pagination } from "@/components/jobs/pagination";
 import { RecentlyViewedSidebar } from "@/components/jobs/recently-viewed-sidebar";
-import { useClientJobs } from "@/hooks/use-client-jobs";
 import { useDebounce } from "@/hooks/use-debounce";
 import {
   defaultBrowseFilters,
-  filterJobsAdvanced,
   sortJobs,
 } from "@/lib/browse-filters";
 import { parseUrlFilters } from "@/lib/parse-url-filters";
-import { JOBS_PER_PAGE } from "@/lib/jobs";
-import type { JobFilters, SortOption } from "@/types/job";
+import type { Job, JobFilters, SortOption } from "@/types/job";
+
+const JOBS_PER_PAGE = 10;
+
+// Map client-side filter fields to API query params
+function buildApiParams(filters: JobFilters, q: string): URLSearchParams {
+  const p = new URLSearchParams();
+  if (q) p.set("q", q);
+  // category is JobCategory | "" — skip empty string
+  if (filters.category) p.set("category", String(filters.category));
+  // workModes is WorkMode[] — send first selected (API supports one workMode)
+  if (filters.workModes?.length) p.set("workMode", filters.workModes[0]);
+  // types is JobType[] — send first selected
+  if (filters.types?.length) p.set("type", filters.types[0]);
+  // experience is ExperienceLevel[] — send first selected
+  if (filters.experience?.length) p.set("experience", filters.experience[0]);
+  // industries is Industry[] — send first selected
+  if (filters.industries?.length) p.set("industry", filters.industries[0]);
+  // Large page size — client handles further sort/page
+  p.set("limit", "100");
+  return p;
+}
 
 export function JobsListing() {
   const searchParams = useSearchParams();
-  const jobs = useClientJobs();
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
@@ -33,30 +52,56 @@ export function JobsListing() {
     parseUrlFilters(searchParams)
   );
 
-  const debouncedQuery = useDebounce(filters.query ?? "", 300);
+  const debouncedQuery = useDebounce(filters.query ?? "", 350);
 
-  const debouncedFilters = useMemo(
-    () => ({ ...filters, query: debouncedQuery }),
-    [filters, debouncedQuery]
-  );
-
+  // Fetch from the database whenever filters or search term changes
   useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 600);
-    return () => clearTimeout(timer);
-  }, []);
+    setLoading(true);
+    const params = buildApiParams(filters, debouncedQuery);
+    fetch(`/api/jobs?${params}`)
+      .then((r) => r.json())
+      .then((data: { jobs?: Job[]; total?: number }) => {
+        setJobs(data.jobs ?? []);
+        setTotal(data.total ?? 0);
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, [debouncedQuery, filters.category, filters.workModes, filters.types, filters.experience, filters.industries]);
 
+  // Client-side sort (date, salary) + client-side filters not supported by the API
+  const sortedJobs = useMemo(() => sortJobs(jobs, sort), [jobs, sort]);
+
+  // Client-side date filter (datePosted: DatePostedFilter)
   const filteredJobs = useMemo(() => {
-    const filtered = filterJobsAdvanced(jobs, debouncedFilters);
-    return sortJobs(filtered, sort);
-  }, [jobs, debouncedFilters, sort]);
+    const dateFilter = filters.datePosted;
+    if (!dateFilter || dateFilter === "any") return sortedJobs;
+    const daysMap: Record<string, number> = { "24h": 1, "3d": 3, "7d": 7, "30d": 30 };
+    const days = daysMap[dateFilter];
+    if (!days) return sortedJobs;
+    const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
+    return sortedJobs.filter((j) => {
+      const d = j.postedDate ? new Date(j.postedDate).getTime() : 0;
+      return d >= cutoff;
+    });
+  }, [sortedJobs, filters.datePosted]);
 
-  const totalPages = Math.max(1, Math.ceil(filteredJobs.length / JOBS_PER_PAGE));
+  // Salary range client filter
+  const salaryFiltered = useMemo(() => {
+    if (!filters.salaryMin && !filters.salaryMax) return filteredJobs;
+    return filteredJobs.filter((j) => {
+      if (filters.salaryMin && j.salaryMin < filters.salaryMin) return false;
+      if (filters.salaryMax && j.salaryMax > filters.salaryMax) return false;
+      return true;
+    });
+  }, [filteredJobs, filters.salaryMin, filters.salaryMax]);
+
+  const totalPages = Math.max(1, Math.ceil(salaryFiltered.length / JOBS_PER_PAGE));
   const safePage = Math.min(currentPage, totalPages);
 
   const paginatedJobs = useMemo(() => {
     const start = (safePage - 1) * JOBS_PER_PAGE;
-    return filteredJobs.slice(start, start + JOBS_PER_PAGE);
-  }, [filteredJobs, safePage]);
+    return salaryFiltered.slice(start, start + JOBS_PER_PAGE);
+  }, [salaryFiltered, safePage]);
 
   const setFiltersAndResetPage = useCallback((next: JobFilters) => {
     setFilters(next);
@@ -72,8 +117,6 @@ export function JobsListing() {
     setFilters({ ...defaultBrowseFilters });
     setCurrentPage(1);
   }, []);
-
-  const isSearching = debouncedQuery !== (filters.query ?? "");
 
   return (
     <div className="mx-auto max-w-7xl animate-in px-4 py-8 sm:px-6 lg:px-8">
@@ -113,17 +156,17 @@ export function JobsListing() {
         <div className="min-w-0 space-y-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-sm text-muted-foreground">
-              {loading || isSearching ? (
+              {loading ? (
                 <span className="inline-block h-4 w-40 animate-pulse rounded bg-muted" />
               ) : (
                 <>
                   Showing{" "}
                   <span className="font-medium text-foreground">
-                    {filteredJobs.length}
+                    {salaryFiltered.length}
                   </span>{" "}
                   of{" "}
                   <span className="font-medium text-foreground">
-                    {jobs.length}
+                    {total}
                   </span>{" "}
                   jobs
                 </>
@@ -136,8 +179,8 @@ export function JobsListing() {
 
           <ActiveFilterChips filters={filters} onChange={setFiltersAndResetPage} />
 
-          {loading || isSearching ? (
-            Array.from({ length: JOBS_PER_PAGE }).map((_, i) => (
+          {loading ? (
+            Array.from({ length: 5 }).map((_, i) => (
               <JobCardSkeleton key={i} />
             ))
           ) : paginatedJobs.length === 0 ? (
@@ -155,7 +198,7 @@ export function JobsListing() {
             </div>
           )}
 
-          {!loading && !isSearching && filteredJobs.length > 0 && (
+          {!loading && salaryFiltered.length > 0 && (
             <Pagination
               currentPage={safePage}
               totalPages={totalPages}
