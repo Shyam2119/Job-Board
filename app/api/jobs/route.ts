@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
     const featured = searchParams.get("featured");
     const limit = searchParams.get("limit");
     const page = parseInt(searchParams.get("page") ?? "1");
-    const pageSize = limit ? parseInt(limit) : 12;
+    const pageSize = limit ? parseInt(limit) : 50;
 
     const where: Prisma.JobWhereInput = {
       AND: [

@@ -30,7 +30,6 @@ function buildApiParams(filters: JobFilters, q: string): URLSearchParams {
   if (filters.types?.length) p.set("type", filters.types[0]);
   if (filters.experience?.length) p.set("experience", filters.experience[0]);
   if (filters.industries?.length) p.set("industry", filters.industries[0]);
-  p.set("limit", "100");
   return p;
 }
 

@@ -15,7 +15,7 @@ export function RecentlyViewedSidebar() {
     if (recentIds.length === 0) return;
 
     let active = true;
-    fetch("/api/jobs?limit=100")
+    fetch("/api/jobs")
       .then((r) => r.json())
       .then((data: { jobs?: Job[] }) => {
         if (active) {
