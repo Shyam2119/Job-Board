@@ -1,5 +1,5 @@
 // app/page.tsx — Home page
-// Featured jobs and company data fetched from Neon PostgreSQL via Prisma
+// Featured jobs and company data fetched from Neon PostgreSQL via Prisma (with static fallback)
 
 import Link from "next/link";
 import Image from "next/image";
@@ -14,6 +14,8 @@ import { JobCard } from "@/components/jobs/job-card";
 import { Button } from "@/components/ui/button";
 import { createMetadata } from "@/lib/metadata";
 import { prisma } from "@/lib/prisma";
+import { jobs as staticJobs } from "@/data/jobs";
+import { getCompaniesFromJobs } from "@/lib/jobs";
 import type { Job } from "@/types/job";
 
 export const metadata = createMetadata({
@@ -23,7 +25,6 @@ export const metadata = createMetadata({
   path: "/",
 });
 
-// Render dynamically on demand so static build step in CI does not require live DB connection
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
@@ -79,7 +80,15 @@ export default async function HomePage() {
       jobCount: c._count.id,
     }));
   } catch (error) {
-    console.error("HomePage DB fetch error:", error);
+    console.warn("HomePage DB fetch warning, using static fallback:", error);
+  }
+
+  // Fallback to static seed data if DB returns 0 results or throws error
+  if (featuredJobs.length === 0) {
+    featuredJobs = staticJobs.filter((j) => j.featured).slice(0, 6);
+  }
+  if (companies.length === 0) {
+    companies = getCompaniesFromJobs(staticJobs).slice(0, 6);
   }
 
   return (
