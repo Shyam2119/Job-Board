@@ -23,59 +23,64 @@ export const metadata = createMetadata({
   path: "/",
 });
 
-// Revalidate home page every 5 minutes to keep featured jobs fresh
-export const revalidate = 300;
+// Render dynamically on demand so static build step in CI does not require live DB connection
+export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  // Fetch featured jobs and companies from the live database
-  const [rawFeatured, companiesData] = await Promise.all([
-    prisma.job.findMany({
-      where: { featured: true },
-      orderBy: { postedDate: "desc" },
-      take: 6,
-    }),
-    prisma.job.groupBy({
-      by: ["companySlug", "company", "logo"],
-      _count: { id: true },
-      orderBy: { _count: { id: "desc" } },
-      take: 6,
-    }),
-  ]);
+  let featuredJobs: Job[] = [];
+  let companies: { name: string; slug: string; logo: string; jobCount: number }[] = [];
 
-  // Map Prisma rows to Job type
-  const featuredJobs: Job[] = rawFeatured.map((raw) => ({
-    id: raw.id,
-    title: raw.title,
-    company: raw.company,
-    companySlug: raw.companySlug,
-    logo: raw.logo,
-    location: raw.location,
-    city: raw.city,
-    salary: raw.salary,
-    salaryMin: raw.salaryMin,
-    salaryMax: raw.salaryMax,
-    type: raw.type as Job["type"],
-    description: raw.description,
-    requirements: raw.requirements,
-    skills: raw.skills,
-    postedDate: raw.postedDate.toISOString(),
-    datePosted: raw.postedDate.toISOString().split("T")[0],
-    category: raw.category as Job["category"],
-    featured: raw.featured,
-    experience: raw.experience as Job["experience"],
-    workMode: raw.workMode as Job["workMode"],
-    industry: raw.industry as Job["industry"],
-    noticePeriod: raw.noticePeriod as Job["noticePeriod"],
-    companyRating: raw.companyRating,
-    applicantCount: raw.applicantCount,
-  }));
+  try {
+    const [rawFeatured, companiesData] = await Promise.all([
+      prisma.job.findMany({
+        where: { featured: true },
+        orderBy: { postedDate: "desc" },
+        take: 6,
+      }),
+      prisma.job.groupBy({
+        by: ["companySlug", "company", "logo"],
+        _count: { id: true },
+        orderBy: { _count: { id: "desc" } },
+        take: 6,
+      }),
+    ]);
 
-  const companies = companiesData.map((c) => ({
-    name: c.company,
-    slug: c.companySlug,
-    logo: c.logo,
-    jobCount: c._count.id,
-  }));
+    featuredJobs = rawFeatured.map((raw) => ({
+      id: raw.id,
+      title: raw.title,
+      company: raw.company,
+      companySlug: raw.companySlug,
+      logo: raw.logo,
+      location: raw.location,
+      city: raw.city,
+      salary: raw.salary,
+      salaryMin: raw.salaryMin,
+      salaryMax: raw.salaryMax,
+      type: raw.type as Job["type"],
+      description: raw.description,
+      requirements: raw.requirements,
+      skills: raw.skills,
+      postedDate: raw.postedDate.toISOString(),
+      datePosted: raw.postedDate.toISOString().split("T")[0],
+      category: raw.category as Job["category"],
+      featured: raw.featured,
+      experience: raw.experience as Job["experience"],
+      workMode: raw.workMode as Job["workMode"],
+      industry: raw.industry as Job["industry"],
+      noticePeriod: raw.noticePeriod as Job["noticePeriod"],
+      companyRating: raw.companyRating,
+      applicantCount: raw.applicantCount,
+    }));
+
+    companies = companiesData.map((c) => ({
+      name: c.company,
+      slug: c.companySlug,
+      logo: c.logo,
+      jobCount: c._count.id,
+    }));
+  } catch (error) {
+    console.error("HomePage DB fetch error:", error);
+  }
 
   return (
     <>

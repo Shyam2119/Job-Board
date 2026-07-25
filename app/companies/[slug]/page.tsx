@@ -11,67 +11,80 @@ interface CompanyPageProps {
   params: Promise<{ slug: string }>;
 }
 
-// Allow any slug to be rendered on demand (new companies appear without rebuild)
 export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: CompanyPageProps) {
   const { slug } = await params;
-  const first = await prisma.job.findFirst({ where: { companySlug: slug } });
-  if (!first) {
+  try {
+    const first = await prisma.job.findFirst({ where: { companySlug: slug } });
+    if (!first) {
+      return createMetadata({
+        title: "Company Not Found",
+        description: "Company profile not found.",
+        path: `/companies/${slug}`,
+        noIndex: true,
+      });
+    }
+    const count = await prisma.job.count({ where: { companySlug: slug } });
     return createMetadata({
-      title: "Company Not Found",
-      description: "Company profile not found.",
+      title: `${first.company} Careers — ${count} Open Jobs`,
+      description: `Explore ${count} open positions at ${first.company}. Apply today on TalentFlow.`,
       path: `/companies/${slug}`,
-      noIndex: true,
+      image: first.logo,
+    });
+  } catch {
+    return createMetadata({
+      title: "Company Profile",
+      description: "Company careers and open job listings.",
+      path: `/companies/${slug}`,
     });
   }
-  const count = await prisma.job.count({ where: { companySlug: slug } });
-  return createMetadata({
-    title: `${first.company} Careers — ${count} Open Jobs`,
-    description: `Explore ${count} open positions at ${first.company}. Apply today on TalentFlow.`,
-    path: `/companies/${slug}`,
-    image: first.logo,
-  });
 }
 
 export default async function CompanyPage({ params }: CompanyPageProps) {
   const { slug } = await params;
 
-  const rawJobs = await prisma.job.findMany({
-    where: { companySlug: slug },
-    orderBy: [{ featured: "desc" }, { postedDate: "desc" }],
-  });
+  let companyJobs: Job[] = [];
 
-  if (rawJobs.length === 0) {
-    notFound();
+  try {
+    const rawJobs = await prisma.job.findMany({
+      where: { companySlug: slug },
+      orderBy: [{ featured: "desc" }, { postedDate: "desc" }],
+    });
+
+    companyJobs = rawJobs.map((raw) => ({
+      id: raw.id,
+      title: raw.title,
+      company: raw.company,
+      companySlug: raw.companySlug,
+      logo: raw.logo,
+      location: raw.location,
+      city: raw.city,
+      salary: raw.salary,
+      salaryMin: raw.salaryMin,
+      salaryMax: raw.salaryMax,
+      type: raw.type as Job["type"],
+      description: raw.description,
+      requirements: raw.requirements,
+      skills: raw.skills,
+      postedDate: raw.postedDate.toISOString(),
+      datePosted: raw.postedDate.toISOString().split("T")[0],
+      category: raw.category as Job["category"],
+      featured: raw.featured,
+      experience: raw.experience as Job["experience"],
+      workMode: raw.workMode as Job["workMode"],
+      industry: raw.industry as Job["industry"],
+      noticePeriod: raw.noticePeriod as Job["noticePeriod"],
+      companyRating: raw.companyRating,
+      applicantCount: raw.applicantCount,
+    }));
+  } catch (error) {
+    console.error("CompanyPage DB fetch error:", error);
   }
 
-  const companyJobs: Job[] = rawJobs.map((raw) => ({
-    id: raw.id,
-    title: raw.title,
-    company: raw.company,
-    companySlug: raw.companySlug,
-    logo: raw.logo,
-    location: raw.location,
-    city: raw.city,
-    salary: raw.salary,
-    salaryMin: raw.salaryMin,
-    salaryMax: raw.salaryMax,
-    type: raw.type as Job["type"],
-    description: raw.description,
-    requirements: raw.requirements,
-    skills: raw.skills,
-    postedDate: raw.postedDate.toISOString(),
-    datePosted: raw.postedDate.toISOString().split("T")[0],
-    category: raw.category as Job["category"],
-    featured: raw.featured,
-    experience: raw.experience as Job["experience"],
-    workMode: raw.workMode as Job["workMode"],
-    industry: raw.industry as Job["industry"],
-    noticePeriod: raw.noticePeriod as Job["noticePeriod"],
-    companyRating: raw.companyRating,
-    applicantCount: raw.applicantCount,
-  }));
+  if (companyJobs.length === 0) {
+    notFound();
+  }
 
   const first = companyJobs[0];
 
